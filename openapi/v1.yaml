@@ -1,0 +1,171 @@
+openapi: "3.0.3"
+
+info:
+  title: compliventory Users Sync API
+  version: "1"
+  description: |
+    Users arrive in compliventory exclusively through this API (plus the seed
+    bootstrap) — there is no in-app user CRUD. The whole contract is upsert by
+    email: POST a user on hire or attribute change, set `active: false` to
+    deactivate. No snapshot-and-diff sync — compliventory only needs "these
+    people exist and may log in / be owners".
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development
+  - url: /api/v1
+    description: Default (relative)
+
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+      description: API token issued per consumer (admin UI → API tokens). Pass as Authorization header.
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      description: |
+        Canonical error envelope. All 4xx and 5xx responses follow this shape.
+        Clients should branch on `error.code` (machine-readable, stable) rather
+        than on `error.message` (human-readable, may change between versions).
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code in snake_case (e.g., "unauthorized", "validation_failed").
+            message:
+              type: string
+              description: Human-readable error message for operator logs and debugging.
+            details:
+              type: object
+              description: Optional structured context specific to the error code.
+              additionalProperties: true
+
+    User:
+      type: object
+      required: [id, email, name, role, active, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          description: Normalized lowercase; the upsert key.
+        name:
+          type: string
+          description: Single full-name field (no first/last split). The directory is source of truth.
+        role:
+          type: string
+          enum: [member, compliance, admin]
+          description: In-app role; managed in the admin UI, not settable via sync.
+        active:
+          type: boolean
+          description: Inactive users cannot sign in and disappear from owner pickers; history is kept.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserUpsert:
+      type: object
+      required: [email, name]
+      properties:
+        email:
+          type: string
+          format: email
+          description: Upsert key. Matched case-insensitively.
+        name:
+          type: string
+        active:
+          type: boolean
+          default: true
+          description: Set false to deactivate (blocks login, removes from owner pickers).
+
+security:
+  - BearerToken: []
+
+paths:
+  /users:
+    get:
+      summary: List all users
+      description: Full user list, ordered by email. No pagination — this is a company directory, not a feed.
+      responses:
+        "200":
+          description: All users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "401":
+          description: Missing or invalid API token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Token lacks the users:write scope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      summary: Upsert a user by email
+      description: |
+        Creates the user if the email is unknown (201), otherwise updates name
+        and active flag (200). Emits a `user.synced` audit event when anything
+        changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpsert"
+      responses:
+        "200":
+          description: Existing user updated (or already up to date).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "201":
+          description: User created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Required parameter missing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Missing or invalid API token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Token lacks the users:write scope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

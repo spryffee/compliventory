@@ -1,0 +1,13 @@
+# Raw values the tests authenticate with (digests below):
+#   sync:    cvt_test-sync-token-000000000000000000000000000
+#   expired: cvt_test-expired-token-0000000000000000000000000
+sync:
+  name: HRIS sync
+  scope: users:write
+  token_digest: <%= Digest::SHA256.hexdigest("cvt_test-sync-token-000000000000000000000000000") %>
+
+expired:
+  name: Old token
+  scope: users:write
+  token_digest: <%= Digest::SHA256.hexdigest("cvt_test-expired-token-0000000000000000000000000") %>
+  expires_at: <%= 1.day.ago.iso8601 %>

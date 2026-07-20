@@ -1,0 +1,71 @@
+class AuditEvent < ApplicationRecord
+  ACTOR_TYPES = %w[user system].freeze
+  CURRENT_SCHEMA_VERSION = "1.0".freeze
+
+  belongs_to :actor, class_name: "User", optional: true
+
+  validates :event_type, presence: true
+  validates :actor_type, inclusion: { in: ACTOR_TYPES }
+  validates :correlation_id, presence: true
+  validate :actor_id_matches_actor_type
+
+  # Canonical write path for the audit log. Do not call `create!` directly.
+  #
+  # `metadata` convention (ported from governauthzer):
+  #   - "source"  → the write CHANNEL the operation entered through:
+  #                 "api" | "admin-ui" | "web-ui" | "job" (auth.* events use the
+  #                 auth method here, e.g. "oidc" / "dev-sign-in").
+  #   - domain context (decision, reason, snapshot, …) gets its own key.
+  def self.record!(event_type:, actor:, targets: [], justification: nil, attribute_changes: nil, metadata: nil)
+    create!(
+      occurred_at: Time.current,
+      schema_version: CURRENT_SCHEMA_VERSION,
+      event_type: event_type,
+      actor_type: actor == :system ? "system" : "user",
+      actor_id: actor == :system ? nil : actor.id,
+      actor_display: actor == :system ? nil : actor.audit_display,
+      targets: Array(targets).map { |t| target_descriptor(t) },
+      justification: justification,
+      attribute_changes: attribute_changes,
+      ip_address: Current.ip_address,
+      user_agent: Current.user_agent,
+      correlation_id: Current.correlation_id,
+      metadata: metadata_with_token_attribution(metadata)
+    )
+  end
+
+  # Every event emitted during a token-authenticated API request carries the
+  # consumer's identity, uniformly — callers don't pass it (same contract as
+  # correlation_id). reverse_merge: an explicit caller value wins.
+  def self.metadata_with_token_attribution(metadata)
+    token = Current.api_token
+    return metadata if token.nil?
+
+    (metadata || {}).reverse_merge(
+      "api_token_id" => token.id,
+      "api_token_name" => token.name
+    )
+  end
+  private_class_method :metadata_with_token_attribution
+
+  def self.target_descriptor(record)
+    { "type" => record.class.name, "id" => record.id, "display" => record.audit_display }
+  end
+
+  # Read-side twin of target_descriptor: the id of the first target of the given
+  # type ("Vendor", "System", …), or nil if the event carries none.
+  def target_id(type)
+    targets.find { |t| t["type"] == type }&.dig("id")
+  end
+
+  private
+
+  def actor_id_matches_actor_type
+    case actor_type
+    when "user"
+      errors.add(:actor_id, "must be set when actor_type is user") if actor_id.blank?
+    when "system"
+      errors.add(:actor_id, "must be blank when actor_type is system") if actor_id.present?
+    end
+  end
+end

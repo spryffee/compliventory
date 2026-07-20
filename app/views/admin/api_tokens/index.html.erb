@@ -1,0 +1,61 @@
+<% content_for :title, "API tokens — Compliventory" %>
+
+<div class="max-w-5xl mx-auto">
+  <%= render "admin/nav" %>
+
+  <% if @plain_token %>
+    <div class="mb-6 p-4 rounded-lg border border-pine-300 bg-pine-50">
+      <p class="text-sm text-pine-800 mb-2">
+        Token created: <strong><%= @plain_token_name %></strong>. Copy it now — it won't be shown again.
+      </p>
+      <pre class="bg-white rounded-lg p-3 text-xs font-mono break-all border border-pine-200 text-gray-900"><%= @plain_token %></pre>
+    </div>
+  <% end %>
+
+  <%= render "shared/flash" %>
+
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="page-title">API tokens</h1>
+    <%= link_to "Create token", new_admin_api_token_path, class: "btn btn-primary btn-sm" %>
+  </div>
+
+  <% if @api_tokens.empty? %>
+    <p class="text-sm text-gray-600">No API tokens issued yet.</p>
+  <% else %>
+    <div class="panel">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Scope</th>
+            <th>Created</th>
+            <th>Expires</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @api_tokens.each do |token| %>
+            <tr class="row-hover">
+              <td class="font-medium text-gray-900"><%= token.name %></td>
+              <td><span class="font-mono text-xs px-2 py-0.5 rounded bg-pine-50 text-pine-700"><%= token.scope %></span></td>
+              <td class="text-gray-600 font-mono text-xs"><%= token.created_at.to_date.iso8601 %></td>
+              <td class="text-gray-600 font-mono text-xs">
+                <% if token.expires_at %>
+                  <%= token.expires_at.to_date.iso8601 %><%= " (expired)" if token.expired? %>
+                <% else %>
+                  <span class="text-gray-400">never</span>
+                <% end %>
+              </td>
+              <td class="text-right">
+                <%= button_to "Revoke", admin_api_token_path(token),
+                              method: :delete,
+                              form: { data: { turbo_confirm: "Revoke #{token.name}? Clients using it will lose access." } },
+                              class: "btn-quiet" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>

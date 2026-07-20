@@ -42,3 +42,30 @@ module ActiveSupport
     fixtures :all
   end
 end
+
+class ActionDispatch::IntegrationTest
+  include Committee::Rails::Test::Methods
+
+  def committee_options
+    @committee_options ||= {
+      schema_path: Rails.root.join("openapi/v1.yaml").to_s,
+      prefix: "/api/v1",
+      parse_response_by_content_type: true,
+      ignore_response_fields_not_in_spec: true,
+      strict_reference_validation: true
+    }
+  end
+
+  # Signs the given user in through the real OIDC callback (email matching),
+  # using OmniAuth's test mode — no separate test-only session backdoor.
+  def sign_in_as(user)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:oidc] = OmniAuth::AuthHash.new(
+      provider: "oidc", uid: "test-sub-#{user.id}", info: { email: user.email }
+    )
+    get "/auth/oidc/callback"
+  ensure
+    OmniAuth.config.mock_auth[:oidc] = nil
+    OmniAuth.config.test_mode = false
+  end
+end

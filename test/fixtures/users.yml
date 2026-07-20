@@ -1,0 +1,30 @@
+admin:
+  email: admin@example.com
+  name: Alice Admin
+  role: admin
+
+compliance:
+  email: clara@example.com
+  name: Clara Compliance
+  role: compliance
+
+owner:
+  email: oscar@example.com
+  name: Oscar Owner
+  role: member
+
+delegate:
+  email: dana@example.com
+  name: Dana Delegate
+  role: member
+
+employee:
+  email: eve@example.com
+  name: Eve Employee
+  role: member
+
+inactive:
+  email: gone@example.com
+  name: Gary Gone
+  role: member
+  active: false

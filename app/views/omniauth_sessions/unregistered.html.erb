@@ -1,0 +1,23 @@
+<% content_for :title, "Not registered — Compliventory" %>
+
+<div class="w-full max-w-md mx-auto mt-12">
+  <div class="flex flex-col items-center text-center mb-8">
+    <%= brand_mark(css_class: "w-11 h-11 mb-4") %>
+    <h1 class="page-title">Almost there</h1>
+  </div>
+
+  <div class="card p-6 text-sm text-gray-700 space-y-3">
+    <p>
+      You signed in at the identity provider as
+      <strong class="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded"><%= @email %></strong>,
+      but that address isn't registered in Compliventory yet (or the account is deactivated).
+    </p>
+    <p>
+      Ask your administrator to sync your account — users arrive via the directory
+      sync, so this usually just means the next sync hasn't run yet.
+    </p>
+    <p class="pt-2">
+      <%= link_to "← Back to sign-in", login_path, class: "text-pine-700 font-medium hover:underline" %>
+    </p>
+  </div>
+</div>

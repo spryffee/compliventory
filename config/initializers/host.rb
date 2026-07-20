@@ -1,0 +1,16 @@
+# Base host for URL helpers (OIDC redirect_uri, mailer links).
+# Set COMPLIVENTORY_HOST in production (e.g., https://compliventory.example.com).
+# Dev default: http://localhost:3000.
+
+raw_host = ENV.fetch("COMPLIVENTORY_HOST", "http://localhost:3000")
+uri = URI.parse(raw_host)
+
+url_options = { protocol: uri.scheme || "http", host: uri.host || raw_host }
+url_options[:port] = uri.port if uri.port && uri.port != uri.default_port
+
+Rails.application.routes.default_url_options.merge!(url_options)
+
+# Mailer links must use the same host — otherwise emails point at the framework
+# default (e.g. example.com). Set on the live class so it applies regardless of
+# Action Mailer railtie ordering.
+ActionMailer::Base.default_url_options = url_options
