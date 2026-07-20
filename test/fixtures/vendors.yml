@@ -1,0 +1,16 @@
+acme:
+  name: Acme Cloud
+  website: https://acme.example
+  description: Object storage and CDN.
+  category: cloud_infra
+  status: active
+  owner: owner
+  processes_personal_data: true
+  data_location: eu
+  risk_tier: medium
+
+pending_vendor:
+  name: NewTool.io
+  category: saas
+  status: pending_approval
+  owner: employee

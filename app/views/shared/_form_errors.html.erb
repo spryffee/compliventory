@@ -1,0 +1,11 @@
+<%# locals: record %>
+<% if record.errors.any? %>
+  <div class="card border-red-300 bg-red-50 p-4 mb-4 text-sm text-red-800">
+    <p class="font-medium mb-1">Could not save:</p>
+    <ul class="list-disc pl-4">
+      <% record.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

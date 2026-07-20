@@ -1,0 +1,2 @@
+class VendorPolicy < AssetPolicy
+end

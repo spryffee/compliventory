@@ -1,0 +1,2 @@
+class SystemPolicy < AssetPolicy
+end

@@ -36,6 +36,52 @@ if Rails.env.development?
     u.active = false
   end
 
+  owner = User.find_by!(email: "owner@example.com")
+  delegate = User.find_by!(email: "delegate@example.com")
+  employee = User.find_by!(email: "employee@example.com")
+
+  acme = Vendor.find_or_create_by!(name: "Acme Cloud") do |v|
+    v.website = "https://acme.example"
+    v.description = "Object storage and CDN."
+    v.category = "cloud_infra"
+    v.status = "active"
+    v.owner = owner
+    v.processes_personal_data = true
+    v.data_location = "eu"
+    v.risk_tier = "medium"
+  end
+
+  Vendor.find_or_create_by!(name: "NewTool.io") do |v|
+    v.category = "saas"
+    v.status = "pending_approval"
+    v.owner = employee
+    v.description = "Awaiting compliance approval — activate via edit as compliance."
+  end
+
+  tracker = System.find_or_create_by!(name: "Issue Tracker") do |s|
+    s.vendor = acme
+    s.description = "Where work is tracked."
+    s.status = "active"
+    s.owner = owner
+    s.department = "Engineering"
+    s.authentication_method = "sso"
+    s.criticality = "high"
+    s.data_classification = "confidential"
+    s.stores_personal_data = true
+    s.personal_data_categories = %w[employees]
+  end
+
+  System.find_or_create_by!(name: "Internal Wiki") do |s|
+    s.status = "active"
+    s.owner = employee
+    s.authentication_method = "sso"
+    s.data_classification = "internal"
+  end
+
+  [ acme, tracker ].each do |asset|
+    Delegation.find_or_create_by!(asset: asset, user: delegate)
+  end
+
   puts <<~OUT
     Done. Demo users (sign in at /dev/sign-in):
       admin@example.com       (admin — user roles, API tokens)

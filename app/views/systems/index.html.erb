@@ -1,0 +1,41 @@
+<% content_for :title, "Systems — Compliventory" %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-5xl mx-auto">
+  <div class="flex items-center justify-between mb-2">
+    <h1 class="page-title">Systems</h1>
+    <%= link_to "New system", new_system_path, class: "btn btn-primary btn-sm" %>
+  </div>
+  <p class="page-subtitle mb-6">Every application and system in use, vendor-backed or in-house.</p>
+
+  <div class="panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Vendor</th>
+          <th>Status</th>
+          <th>Criticality</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @assets.empty? %>
+          <tr><td colspan="5" class="text-gray-500">No systems yet — <%= link_to "add the first one", new_system_path, class: "text-pine-700 font-medium hover:underline" %>.</td></tr>
+        <% end %>
+        <% @assets.each do |system| %>
+          <tr class="row-hover">
+            <td class="font-medium"><%= link_to system.name, system, class: "text-gray-900 hover:text-pine-700" %></td>
+            <td class="text-gray-600"><%= system.vendor ? link_to(system.vendor.name, system.vendor, class: "hover:text-pine-700") : "In-house" %></td>
+            <td><%= status_pill(system.status) %></td>
+            <td class="text-gray-600"><%= display_value(system.criticality) %></td>
+            <td class="text-gray-600"><%= system.owner.name %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= render "shared/pagination", pagy: @pagy %>
+</div>

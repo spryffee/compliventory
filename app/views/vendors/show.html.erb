@@ -1,0 +1,56 @@
+<% content_for :title, "#{@asset.name} — Compliventory" %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-5xl mx-auto">
+  <div class="flex items-center justify-between gap-3 mb-1">
+    <div class="flex items-center gap-3 min-w-0">
+      <h1 class="page-title truncate"><%= @asset.name %></h1>
+      <%= status_pill(@asset.status) %>
+    </div>
+    <% if policy.may_edit_anything? %>
+      <%= link_to "Edit", edit_vendor_path(@asset), class: "btn btn-secondary btn-sm" %>
+    <% end %>
+  </div>
+  <p class="page-subtitle mb-6">Vendor · <%= display_value(@asset.category) %></p>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+    <div class="md:col-span-2 space-y-6">
+      <dl class="card divide-y divide-gray-100">
+        <%= detail_row("Website") do %>
+          <% if @asset.website.present? %>
+            <%= link_to @asset.website, @asset.website, class: "text-pine-700 hover:underline", target: "_blank", rel: "noopener" %>
+          <% end %>
+        <% end %>
+        <%= detail_row("Description", @asset.description) %>
+        <%= detail_row("Vendor contact") do %>
+          <% if @asset.contact_name.present? || @asset.contact_email.present? %>
+            <%= [ @asset.contact_name, @asset.contact_email ].compact_blank.join(" · ") %>
+          <% end %>
+        <% end %>
+        <%= detail_row("Notes", @asset.notes) %>
+        <%= detail_row("Systems") do %>
+          <% if @asset.systems.any? %>
+            <%= safe_join(@asset.systems.order(:name).map { |s| link_to s.name, s, class: "text-pine-700 hover:underline" }, ", ") %>
+          <% end %>
+        <% end %>
+      </dl>
+
+      <div>
+        <h2 class="section-label mb-2">Compliance ⚖</h2>
+        <dl class="card divide-y divide-gray-100">
+          <%= detail_row("Processes personal data", display_value(@asset.processes_personal_data)) %>
+          <%= detail_row("Data location", @asset.data_location&.upcase) %>
+          <%= detail_row("Risk tier", display_value(@asset.risk_tier)) %>
+        </dl>
+      </div>
+
+      <div>
+        <h2 class="section-label mb-2">Activity</h2>
+        <%= render "assets/audit_trail", audit_events: @audit_events %>
+      </div>
+    </div>
+
+    <%= render "assets/ownership", asset: @asset, policy: policy %>
+  </div>
+</div>

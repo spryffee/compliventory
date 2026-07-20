@@ -1,0 +1,30 @@
+<%# locals: audit_events %>
+<div class="card divide-y divide-gray-100">
+  <% if audit_events.empty? %>
+    <div class="px-5 py-4 text-sm text-gray-500">No activity yet.</div>
+  <% end %>
+  <% audit_events.each do |event| %>
+    <div class="px-5 py-3">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-sm font-medium text-gray-900"><%= event.event_type %></span>
+        <span class="text-xs text-gray-400"><%= audit_timestamp(event.occurred_at) %></span>
+      </div>
+      <div class="text-xs text-gray-500 mt-0.5">
+        by <%= event.actor_display || "system" %>
+      </div>
+      <% if event.attribute_changes.present? %>
+        <div class="mt-1.5 space-y-0.5">
+          <% event.attribute_changes.each do |field, (from, to)| %>
+            <div class="text-xs text-gray-600">
+              <span class="font-medium"><%= field.humanize %></span>:
+              <%= audit_value(from) %> → <%= audit_value(to) %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+      <% if event.justification.present? %>
+        <div class="mt-1.5 text-xs text-gray-600 italic">"<%= event.justification %>"</div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

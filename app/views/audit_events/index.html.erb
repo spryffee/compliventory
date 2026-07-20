@@ -1,0 +1,64 @@
+<% content_for :title, "Audit log — Compliventory" %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-5xl mx-auto">
+  <h1 class="page-title mb-1">Audit log</h1>
+  <p class="page-subtitle mb-6">Every change in compliventory — who, what, when.</p>
+
+  <%= form_with url: audit_events_path, method: :get, data: { controller: "autosubmit" }, class: "flex flex-wrap items-center gap-3 mb-4" do |f| %>
+    <%= f.select :event_type, @event_types.map { |t| [ t, t ] }, { include_blank: "All events", selected: params[:event_type] },
+          class: "input w-56 py-1.5 text-sm", data: { action: "change->autosubmit#submit" } %>
+    <%= f.select :actor_id, @actors.map { |u| [ u.name, u.id ] }, { include_blank: "All actors", selected: params[:actor_id] },
+          class: "input w-56 py-1.5 text-sm", data: { action: "change->autosubmit#submit" } %>
+    <% if params[:event_type].present? || params[:actor_id].present? %>
+      <%= link_to "Clear", audit_events_path, class: "btn-quiet" %>
+    <% end %>
+  <% end %>
+
+  <div class="panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Event</th>
+          <th>Actor</th>
+          <th>Targets</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @audit_events.empty? %>
+          <tr><td colspan="5" class="text-gray-500">Nothing here (yet).</td></tr>
+        <% end %>
+        <% @audit_events.each do |event| %>
+          <tr class="row-hover align-top">
+            <td class="text-gray-500 text-xs"><%= audit_timestamp(event.occurred_at) %></td>
+            <td><span class="pill bg-gray-100 text-gray-700"><%= event.event_type %></span></td>
+            <td class="text-gray-600"><%= event.actor_display || "system" %></td>
+            <td class="text-gray-600">
+              <%= safe_join(event.targets.map { |t| audit_target_tag(t) }, ", ") %>
+            </td>
+            <td>
+              <% if event.attribute_changes.present? %>
+                <div class="space-y-0.5">
+                  <% event.attribute_changes.each do |field, (from, to)| %>
+                    <div class="text-xs text-gray-600">
+                      <span class="font-medium"><%= field.humanize %></span>:
+                      <%= audit_value(from) %> → <%= audit_value(to) %>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+              <% if event.justification.present? %>
+                <div class="text-xs text-gray-600 italic mt-0.5">"<%= event.justification %>"</div>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= render "shared/pagination", pagy: @pagy %>
+</div>

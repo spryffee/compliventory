@@ -1,0 +1,7 @@
+acme_dana:
+  asset: acme (Vendor)
+  user: delegate
+
+tracker_dana:
+  asset: tracker (System)
+  user: delegate

@@ -7,8 +7,11 @@
        class: "block px-2 py-2 rounded-md text-sm #{active ? 'text-gray-900 font-medium bg-pine-50' : 'text-gray-700 hover:bg-gray-100'}"
    } %>
 <% sections = [
-     [ "Dashboard", root_path, controller_name == "dashboard" ]
-   ] %>
+     [ "Dashboard", root_path, controller_name == "dashboard" ],
+     [ "Vendors", vendors_path, controller_name == "vendors" ],
+     [ "Systems", systems_path, controller_name == "systems" ]
+   ]
+   sections << [ "Audit", audit_events_path, controller_name == "audit_events" ] if current_user.compliance? || current_user.admin? %>
 
 <div class="fixed top-3 inset-x-0 z-40" data-controller="menu">
   <div class="container mx-auto px-5">

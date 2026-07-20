@@ -1,0 +1,127 @@
+<%# locals: asset, fields %>
+<%= render "shared/form_errors", record: asset %>
+
+<%= form_with model: asset, class: "space-y-6" do |f| %>
+  <div class="card p-6 space-y-5">
+    <% if fields.include?(:name) %>
+      <div>
+        <%= f.label :name, class: "field-label" %>
+        <%= f.text_field :name, class: "input", required: true %>
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <% if fields.include?(:vendor_id) %>
+        <div>
+          <%= f.label :vendor_id, "Vendor", class: "field-label" %>
+          <%= f.select :vendor_id, Vendor.order(:name).map { |v| [ v.name, v.id ] }, { include_blank: "None — in-house" }, class: "input" %>
+        </div>
+      <% end %>
+
+      <% if fields.include?(:status) %>
+        <div>
+          <%= f.label :status, class: "field-label" %>
+          <% statuses = asset.pending_approval? ? System::STATUSES : System::STATUSES - [ "pending_approval" ] %>
+          <%= f.select :status, statuses.map { |s| [ s.humanize, s ] }, {}, class: "input" %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if fields.include?(:description) %>
+      <div>
+        <%= f.label :description, class: "field-label" %>
+        <%= f.text_area :description, rows: 3, class: "input", placeholder: "What is it for?" %>
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <% if fields.include?(:owner_id) %>
+        <div>
+          <%= f.label :owner_id, "Business owner", class: "field-label" %>
+          <%= f.select :owner_id, User.active.order(:name).map { |u| [ u.name, u.id ] }, {}, class: "input" %>
+          <p class="field-hint">The accountable person; day-to-day edits can be delegated.</p>
+        </div>
+      <% end %>
+
+      <% if fields.include?(:technical_owner_id) %>
+        <div>
+          <%= f.label :technical_owner_id, "Technical owner", class: "field-label" %>
+          <%= f.select :technical_owner_id, User.active.order(:name).map { |u| [ u.name, u.id ] }, { include_blank: "—" }, class: "input" %>
+        </div>
+      <% end %>
+
+      <% if fields.include?(:department) %>
+        <div>
+          <%= f.label :department, class: "field-label" %>
+          <%= f.text_field :department, class: "input" %>
+        </div>
+      <% end %>
+
+      <% if fields.include?(:authentication_method) %>
+        <div>
+          <%= f.label :authentication_method, class: "field-label" %>
+          <%= f.select :authentication_method,
+                [ [ "SSO / OIDC", "sso" ], [ "Password + MFA", "password_mfa" ], [ "Password", "password" ], [ "Other", "other" ] ],
+                { include_blank: "—" }, class: "input" %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if fields.include?(:url) %>
+      <div>
+        <%= f.label :url, "URL", class: "field-label" %>
+        <%= f.text_field :url, class: "input", placeholder: "https://…" %>
+      </div>
+    <% end %>
+
+    <% if fields.include?(:notes) %>
+      <div>
+        <%= f.label :notes, class: "field-label" %>
+        <%= f.text_area :notes, rows: 2, class: "input" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if (fields & System::COMPLIANCE_FIELDS).any? %>
+    <div class="card p-6 space-y-5">
+      <h2 class="section-label">Compliance ⚖</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <% if fields.include?(:criticality) %>
+          <div>
+            <%= f.label :criticality, class: "field-label" %>
+            <%= f.select :criticality, System::CRITICALITIES.map { |c| [ c.humanize, c ] }, { include_blank: "—" }, class: "input" %>
+          </div>
+        <% end %>
+        <% if fields.include?(:data_classification) %>
+          <div>
+            <%= f.label :data_classification, class: "field-label" %>
+            <%= f.select :data_classification, System::DATA_CLASSIFICATIONS.map { |c| [ c.humanize, c ] }, { include_blank: "—" }, class: "input" %>
+          </div>
+        <% end %>
+        <% if fields.include?(:stores_personal_data) %>
+          <div>
+            <%= f.label :stores_personal_data, class: "field-label" %>
+            <%= f.select :stores_personal_data, [ [ "Yes", true ], [ "No", false ] ], { include_blank: "Unknown" }, class: "input" %>
+          </div>
+        <% end %>
+      </div>
+      <% if fields.include?(:personal_data_categories) %>
+        <div>
+          <span class="field-label">Personal data categories</span>
+          <div class="flex flex-wrap gap-x-5 gap-y-2 mt-1">
+            <%= f.collection_check_boxes :personal_data_categories, System::PERSONAL_DATA_CATEGORIES.map { |c| [ c, c.humanize ] }, :first, :last do |b| %>
+              <label class="inline-flex items-center gap-1.5 text-sm text-gray-700">
+                <%= b.check_box(class: "rounded border-gray-300") %> <%= b.text %>
+              </label>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center gap-3">
+    <%= f.submit asset.new_record? ? "Submit system" : "Save changes", class: "btn btn-primary" %>
+    <%= link_to "Cancel", asset.new_record? ? systems_path : system_path(asset), class: "btn btn-secondary" %>
+  </div>
+<% end %>

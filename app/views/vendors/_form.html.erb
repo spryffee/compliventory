@@ -1,0 +1,108 @@
+<%# locals: asset, fields %>
+<%= render "shared/form_errors", record: asset %>
+
+<%= form_with model: asset, class: "space-y-6" do |f| %>
+  <div class="card p-6 space-y-5">
+    <% if fields.include?(:name) %>
+      <div>
+        <%= f.label :name, class: "field-label" %>
+        <%= f.text_field :name, class: "input", required: true %>
+      </div>
+    <% end %>
+
+    <% if fields.include?(:website) %>
+      <div>
+        <%= f.label :website, class: "field-label" %>
+        <%= f.text_field :website, class: "input", placeholder: "https://…" %>
+      </div>
+    <% end %>
+
+    <% if fields.include?(:description) %>
+      <div>
+        <%= f.label :description, class: "field-label" %>
+        <%= f.text_area :description, rows: 3, class: "input", placeholder: "What do we use them for?" %>
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <% if fields.include?(:category) %>
+        <div>
+          <%= f.label :category, class: "field-label" %>
+          <%= f.select :category, Vendor::CATEGORIES.map { |c| [ c.humanize, c ] }, { include_blank: "—" }, class: "input" %>
+        </div>
+      <% end %>
+
+      <% if fields.include?(:status) %>
+        <div>
+          <%= f.label :status, class: "field-label" %>
+          <% statuses = asset.pending_approval? ? Vendor::STATUSES : Vendor::STATUSES - [ "pending_approval" ] %>
+          <%= f.select :status, statuses.map { |s| [ s.humanize, s ] }, {}, class: "input" %>
+        </div>
+      <% end %>
+
+      <% if fields.include?(:owner_id) %>
+        <div>
+          <%= f.label :owner_id, "Business owner", class: "field-label" %>
+          <%= f.select :owner_id, User.active.order(:name).map { |u| [ u.name, u.id ] }, {}, class: "input" %>
+          <p class="field-hint">The accountable person; day-to-day edits can be delegated.</p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if fields.include?(:contact_name) || fields.include?(:contact_email) %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <% if fields.include?(:contact_name) %>
+          <div>
+            <%= f.label :contact_name, "Vendor contact name", class: "field-label" %>
+            <%= f.text_field :contact_name, class: "input" %>
+          </div>
+        <% end %>
+        <% if fields.include?(:contact_email) %>
+          <div>
+            <%= f.label :contact_email, "Vendor contact email", class: "field-label" %>
+            <%= f.text_field :contact_email, class: "input" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if fields.include?(:notes) %>
+      <div>
+        <%= f.label :notes, class: "field-label" %>
+        <%= f.text_area :notes, rows: 2, class: "input" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if (fields & Vendor::COMPLIANCE_FIELDS).any? %>
+    <div class="card p-6 space-y-5">
+      <h2 class="section-label">Compliance ⚖</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <% if fields.include?(:processes_personal_data) %>
+          <div>
+            <%= f.label :processes_personal_data, class: "field-label" %>
+            <%= f.select :processes_personal_data, [ [ "Yes", true ], [ "No", false ] ], { include_blank: "Unknown" }, class: "input" %>
+          </div>
+        <% end %>
+        <% if fields.include?(:data_location) %>
+          <div>
+            <%= f.label :data_location, class: "field-label" %>
+            <%= f.select :data_location, Vendor::DATA_LOCATIONS.map { |l| [ l == "other" ? "Other" : l.upcase, l ] }, { include_blank: "—" }, class: "input" %>
+          </div>
+        <% end %>
+        <% if fields.include?(:risk_tier) %>
+          <div>
+            <%= f.label :risk_tier, class: "field-label" %>
+            <%= f.select :risk_tier, Vendor::RISK_TIERS.map { |t| [ t.humanize, t ] }, { include_blank: "Not assessed" }, class: "input" %>
+            <p class="field-hint">Set by compliance only.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="flex items-center gap-3">
+    <%= f.submit asset.new_record? ? "Submit vendor" : "Save changes", class: "btn btn-primary" %>
+    <%= link_to "Cancel", asset.new_record? ? vendors_path : vendor_path(asset), class: "btn btn-secondary" %>
+  </div>
+<% end %>

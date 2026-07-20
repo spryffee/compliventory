@@ -1,0 +1,10 @@
+<% content_for :title, "Edit #{@asset.name} — Compliventory" %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-3xl mx-auto">
+  <h1 class="page-title mb-1">Edit <%= @asset.name %></h1>
+  <p class="page-subtitle mb-6">Fields you can change directly apply immediately and are audited.</p>
+
+  <%= render "form", asset: @asset, fields: @form_fields %>
+</div>

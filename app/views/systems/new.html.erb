@@ -1,0 +1,16 @@
+<% content_for :title, "New system — Compliventory" %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-3xl mx-auto">
+  <h1 class="page-title mb-1">New system</h1>
+  <p class="page-subtitle mb-6">
+    <% if current_user.compliance? %>
+      Compliance submissions go live immediately.
+    <% else %>
+      Your submission goes to the compliance team for approval.
+    <% end %>
+  </p>
+
+  <%= render "form", asset: @asset, fields: @form_fields %>
+</div>

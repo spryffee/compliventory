@@ -6,7 +6,14 @@
   <h1 class="page-title mb-1">Welcome, <%= current_user.name.split.first %></h1>
   <p class="page-subtitle mb-8">The company's vendors and systems, accounted for.</p>
 
-  <div class="card p-6 text-sm text-gray-600">
-    The inventory is on its way — vendors and systems arrive in the next build phase.
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <%= link_to vendors_path, class: "card card-hover p-6 block" do %>
+      <div class="text-sm font-medium text-gray-900 mb-1">Vendors</div>
+      <div class="text-sm text-gray-500">Every third party the company relies on.</div>
+    <% end %>
+    <%= link_to systems_path, class: "card card-hover p-6 block" do %>
+      <div class="text-sm font-medium text-gray-900 mb-1">Systems</div>
+      <div class="text-sm text-gray-500">Applications and systems, vendor-backed or in-house.</div>
+    <% end %>
   </div>
 </div>

@@ -1,0 +1,13 @@
+<% if pagy.last > 1 %>
+  <div class="flex items-center justify-between mt-4 text-sm text-gray-500">
+    <span>Page <%= pagy.page %> of <%= pagy.last %> · <%= pagy.count %> total</span>
+    <div class="flex gap-2">
+      <% if pagy.previous %>
+        <%= link_to "← Previous", pagy.page_url(:previous), class: "btn btn-secondary btn-xs" %>
+      <% end %>
+      <% if pagy.next %>
+        <%= link_to "Next →", pagy.page_url(:next), class: "btn btn-secondary btn-xs" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

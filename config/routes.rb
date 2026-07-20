@@ -10,6 +10,15 @@ Rails.application.routes.draw do
   get "/auth/oidc/callback" => "omniauth_sessions#callback", as: :oidc_callback
   get "/auth/failure"       => "omniauth_sessions#failure",  as: :oidc_failure
 
+  resources :vendors, except: :destroy do
+    resources :delegations, only: %i[create destroy], defaults: { asset_type: "Vendor" }
+  end
+  resources :systems, except: :destroy do
+    resources :delegations, only: %i[create destroy], defaults: { asset_type: "System" }
+  end
+
+  get "/audit" => "audit_events#index", as: :audit_events
+
   namespace :admin do
     resources :users, only: %i[index update]
     resources :api_tokens, only: %i[index new create destroy]

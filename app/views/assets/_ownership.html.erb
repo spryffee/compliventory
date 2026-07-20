@@ -1,0 +1,39 @@
+<%# locals: asset, policy %>
+<div class="card p-5">
+  <h2 class="section-label mb-3">Ownership</h2>
+
+  <div class="text-sm">
+    <div class="text-gray-500 text-xs mb-0.5">Business owner</div>
+    <div class="text-gray-900 font-medium"><%= asset.owner.name %></div>
+  </div>
+
+  <div class="mt-4 text-sm">
+    <div class="text-gray-500 text-xs mb-1">Delegates</div>
+    <% delegations = asset.delegations.includes(:user).sort_by { |d| d.user.name } %>
+    <% if delegations.empty? %>
+      <div class="text-gray-400">None</div>
+    <% else %>
+      <ul class="space-y-1">
+        <% delegations.each do |delegation| %>
+          <li class="flex items-center justify-between gap-2">
+            <span class="text-gray-900"><%= delegation.user.name %></span>
+            <% if policy.may_manage_delegates? %>
+              <%= button_to "Remove", [ asset, delegation ], method: :delete, class: "btn-quiet text-xs" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
+  <% if policy.may_manage_delegates? %>
+    <% candidates = User.active.order(:name).where.not(id: [ asset.owner_id ] + asset.delegations.map(&:user_id)) %>
+    <% if candidates.any? %>
+      <%= form_with url: [ asset, :delegations ], class: "mt-4 flex items-center gap-2" do |f| %>
+        <%= f.select "delegation[user_id]", candidates.map { |u| [ u.name, u.id ] },
+              { include_blank: "Add delegate…" }, class: "input py-1.5 text-sm" %>
+        <%= f.submit "Add", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

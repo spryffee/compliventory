@@ -9,6 +9,13 @@ class AuditEvent < ApplicationRecord
   validates :correlation_id, presence: true
   validate :actor_id_matches_actor_type
 
+  # Events that carry the given record among their targets. Served by the GIN
+  # (jsonb_path_ops) index on `targets`.
+  scope :for_target, ->(record) {
+    where("targets @> ?", [ { type: record.class.name, id: record.id } ].to_json)
+  }
+  scope :recent_first, -> { order(occurred_at: :desc) }
+
   # Canonical write path for the audit log. Do not call `create!` directly.
   #
   # `metadata` convention (ported from governauthzer):

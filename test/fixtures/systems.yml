@@ -1,0 +1,19 @@
+tracker:
+  name: Issue Tracker
+  vendor: acme
+  description: Where work is tracked.
+  status: active
+  owner: owner
+  department: Engineering
+  authentication_method: sso
+  criticality: high
+  data_classification: confidential
+  stores_personal_data: true
+  personal_data_categories:
+    - employees
+
+wiki:
+  name: Internal Wiki
+  status: active
+  owner: employee
+  authentication_method: sso
