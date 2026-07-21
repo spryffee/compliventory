@@ -131,7 +131,8 @@ create_table :change_proposals, id: :uuid do |t|
   t.references :asset, polymorphic: true, type: :uuid, null: false
   t.references :proposer, type: :uuid, null: false, foreign_key: { to_table: :users }
   t.string :lane, null: false            # "owner" | "compliance"
-  t.jsonb :changes, null: false          # { "field" => [base_value, proposed_value] }
+  t.jsonb :attribute_changes, null: false # { "field" => [base_value, proposed_value] }
+                                         # ("changes" would shadow ActiveModel::Dirty — same rename as audit_events)
   t.text :justification
   t.timestamps
 end

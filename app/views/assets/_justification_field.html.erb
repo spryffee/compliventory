@@ -1,0 +1,8 @@
+<%# locals: asset — free-text reason attached to review requests (edit mode only) %>
+<% unless asset.new_record? || current_user.compliance? %>
+  <div class="card p-6">
+    <label class="field-label" for="justification">Justification</label>
+    <%= text_area_tag :justification, params[:justification], rows: 2, class: "input",
+          placeholder: "Why this change? Sent along with anything that goes to review." %>
+  </div>
+<% end %>

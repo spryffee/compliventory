@@ -1,0 +1,16 @@
+<% if @decision == "approved" %>
+  <p>
+    <%= @decided_by %> approved
+    <%= link_to @asset_name, @asset_type == "Vendor" ? vendor_url(@asset_id) : system_url(@asset_id) %> —
+    it is now active in the inventory.
+  </p>
+<% else %>
+  <p>
+    <%= @decided_by %> rejected the submission of <strong><%= @asset_name %></strong>.
+    The record was removed; its snapshot is kept in the audit log.
+  </p>
+<% end %>
+
+<% if @comment.present? %>
+  <p><em>"<%= @comment %>"</em></p>
+<% end %>

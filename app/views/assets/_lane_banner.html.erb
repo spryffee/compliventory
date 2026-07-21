@@ -1,0 +1,11 @@
+<%# locals: asset — tells the editor what will happen on save (edit mode only) %>
+<% unless asset.new_record? || current_user.compliance? %>
+  <div class="card border-pine-200 bg-pine-50 p-4 mb-4 text-sm text-pine-800">
+    <% if asset.owned_or_delegated_to?(current_user) %>
+      Regular fields apply immediately. Changes to ⚖ compliance fields are sent to compliance for review.
+    <% else %>
+      You're not the owner or a delegate, so nothing applies immediately: regular fields are sent
+      to the owner for review, ⚖ fields to compliance.
+    <% end %>
+  </div>
+<% end %>

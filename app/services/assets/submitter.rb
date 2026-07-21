@@ -28,9 +28,20 @@ module Assets
         )
       end
 
+      notify_compliance(asset)
       success(asset)
     rescue ActiveRecord::RecordInvalid => e
       failure(:validation_failed, record: e.record)
+    end
+
+    private
+
+    def notify_compliance(asset)
+      return unless asset.pending_approval?
+
+      User.active.where(role: "compliance").find_each do |reviewer|
+        AssetMailer.with(recipient: reviewer, asset: asset, submitter: @actor).submitted.deliver_later
+      end
     end
   end
 end

@@ -45,11 +45,20 @@ class AssetPolicyTest < ActiveSupport::TestCase
     assert_not policy.editable_directly?(:risk_tier)
   end
 
-  test "unrelated member edits nothing directly" do
+  test "unrelated member edits nothing directly but may propose" do
     policy = AssetPolicy.for(users(:employee), vendors(:acme))
     assert_not policy.editable_directly?(:name)
-    assert_not policy.may_edit_anything?
     assert_not policy.may_manage_delegates?
-    assert_empty policy.editable_fields
+    assert policy.proposable?(:name)
+    assert policy.proposable?(:processes_personal_data)
+    assert_not policy.proposable?(:risk_tier) # compliance-set only
+    assert_not policy.editable_fields.include?(:risk_tier)
+  end
+
+  test "proposable: pending status only moves via compliance" do
+    pending = vendors(:pending_vendor)
+    assert_not AssetPolicy.for(users(:employee), pending).proposable?(:status)
+    assert AssetPolicy.for(users(:compliance), pending).proposable?(:status)
+    assert AssetPolicy.for(users(:employee), vendors(:acme)).proposable?(:status)
   end
 end

@@ -8,9 +8,8 @@
       <h1 class="page-title truncate"><%= @asset.name %></h1>
       <%= status_pill(@asset.status) %>
     </div>
-    <% if policy.may_edit_anything? %>
-      <%= link_to "Edit", edit_system_path(@asset), class: "btn btn-secondary btn-sm" %>
-    <% end %>
+    <% edit_label = current_user.compliance? || @asset.owned_or_delegated_to?(current_user) ? "Edit" : "Propose changes" %>
+    <%= link_to edit_label, edit_system_path(@asset), class: "btn btn-secondary btn-sm" %>
   </div>
   <p class="page-subtitle mb-6">
     System ·
@@ -45,6 +44,17 @@
           <%= detail_row("Personal data categories", display_value(@asset.personal_data_categories)) %>
         </dl>
       </div>
+
+      <% if @proposals.any? %>
+        <div>
+          <h2 class="section-label mb-2">Pending changes</h2>
+          <div class="space-y-4">
+            <% @proposals.each do |proposal| %>
+              <%= render "change_proposals/proposal", proposal: proposal, show_asset: false %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
 
       <div>
         <h2 class="section-label mb-2">Activity</h2>

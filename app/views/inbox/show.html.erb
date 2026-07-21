@@ -1,0 +1,20 @@
+<% content_for :title, "Inbox — Compliventory" %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-3xl mx-auto">
+  <h1 class="page-title mb-1">Inbox</h1>
+  <p class="page-subtitle mb-6">Proposed changes to assets you own or are delegated on.</p>
+
+  <% if @proposals.empty? %>
+    <div class="card p-6 text-sm text-gray-500">
+      Nothing to review — proposals to your assets will show up here.
+    </div>
+  <% else %>
+    <div class="space-y-4">
+      <% @proposals.each do |proposal| %>
+        <%= render "change_proposals/proposal", proposal: proposal, show_asset: true %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

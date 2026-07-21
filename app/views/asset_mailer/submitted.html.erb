@@ -1,0 +1,9 @@
+<p>
+  <%= @submitter.name %> submitted a new <%= @asset.model_name.human.downcase %>:
+  <%= link_to @asset.name, polymorphic_url(@asset) %>.
+</p>
+
+<p>
+  It is awaiting approval in the
+  <%= link_to "compliance inbox", compliance_url %>.
+</p>

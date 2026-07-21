@@ -10,6 +10,7 @@ module Asset
 
     has_many :delegations, as: :asset, dependent: :destroy
     has_many :delegates, through: :delegations, source: :user
+    has_many :change_proposals, as: :asset, dependent: :destroy
 
     validates :name, presence: true, uniqueness: true
     validates :status, inclusion: { in: ->(record) { record.class::STATUSES } }

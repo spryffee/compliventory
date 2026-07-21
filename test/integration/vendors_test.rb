@@ -83,14 +83,16 @@ class VendorsTest < ActionDispatch::IntegrationTest
     assert_equal "combo", vendors(:acme).description
   end
 
-  test "an unrelated member gets no edit access" do
+  test "an unrelated member gets the propose form; changes are not applied directly" do
     sign_in_as users(:employee)
 
     get edit_vendor_path(vendors(:acme))
-    assert_response :forbidden
+    assert_response :success
+    assert_includes response.body, "not the owner or a delegate"
 
-    patch vendor_path(vendors(:acme)), params: { vendor: { name: "Evil Corp" } }
-    assert_response :forbidden
+    assert_difference("ChangeProposal.owner_lane.count", 1) do
+      patch vendor_path(vendors(:acme)), params: { vendor: { name: "Better Name" } }
+    end
     assert_equal "Acme Cloud", vendors(:acme).reload.name
   end
 

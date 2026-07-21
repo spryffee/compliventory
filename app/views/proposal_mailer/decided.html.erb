@@ -1,0 +1,14 @@
+<p>
+  <%= @decided_by %> <%= @decision %> your proposal for
+  <%= link_to @asset_name, @asset_type == "Vendor" ? vendor_url(@asset_id) : system_url(@asset_id) %>:
+</p>
+
+<ul>
+  <% @changes.each do |field, (from, to)| %>
+    <li><strong><%= field.humanize %></strong>: <%= audit_value(from) %> → <%= audit_value(to) %></li>
+  <% end %>
+</ul>
+
+<% if @comment.present? %>
+  <p><em>"<%= @comment %>"</em></p>
+<% end %>

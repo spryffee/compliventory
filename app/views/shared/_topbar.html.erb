@@ -9,8 +9,10 @@
 <% sections = [
      [ "Dashboard", root_path, controller_name == "dashboard" ],
      [ "Vendors", vendors_path, controller_name == "vendors" ],
-     [ "Systems", systems_path, controller_name == "systems" ]
+     [ "Systems", systems_path, controller_name == "systems" ],
+     [ "Inbox", inbox_path, controller_name == "inbox" ]
    ]
+   sections << [ "Compliance", compliance_path, controller_name == "compliance" ] if current_user.compliance?
    sections << [ "Audit", audit_events_path, controller_name == "audit_events" ] if current_user.compliance? || current_user.admin? %>
 
 <div class="fixed top-3 inset-x-0 z-40" data-controller="menu">

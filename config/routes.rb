@@ -11,13 +11,30 @@ Rails.application.routes.draw do
   get "/auth/failure"       => "omniauth_sessions#failure",  as: :oidc_failure
 
   resources :vendors, except: :destroy do
+    member do
+      post :approve
+      post :reject
+    end
     resources :delegations, only: %i[create destroy], defaults: { asset_type: "Vendor" }
   end
   resources :systems, except: :destroy do
+    member do
+      post :approve
+      post :reject
+    end
     resources :delegations, only: %i[create destroy], defaults: { asset_type: "System" }
   end
 
-  get "/audit" => "audit_events#index", as: :audit_events
+  resources :proposals, only: [], controller: "proposals" do
+    member do
+      post :approve
+      post :reject
+    end
+  end
+
+  get "/inbox"      => "inbox#show",      as: :inbox
+  get "/compliance" => "compliance#show", as: :compliance
+  get "/audit"      => "audit_events#index", as: :audit_events
 
   namespace :admin do
     resources :users, only: %i[index update]

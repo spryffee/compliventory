@@ -82,6 +82,11 @@ if Rails.env.development?
     Delegation.find_or_create_by!(asset: asset, user: delegate)
   end
 
+  ChangeProposal.find_or_create_by!(asset: acme, proposer: employee, lane: "owner") do |p|
+    p.attribute_changes = { "description" => [ acme.description, "Object storage, CDN and DNS." ] }
+    p.justification = "They also host our DNS now."
+  end
+
   puts <<~OUT
     Done. Demo users (sign in at /dev/sign-in):
       admin@example.com       (admin — user roles, API tokens)

@@ -1,0 +1,20 @@
+<p>
+  <%= @proposal.proposer.name %> proposed changes to
+  <%= link_to @asset.name, polymorphic_url(@asset) %>
+  (<%= @proposal.lane %> review):
+</p>
+
+<ul>
+  <% @proposal.attribute_changes.each do |field, (from, to)| %>
+    <li><strong><%= field.humanize %></strong>: <%= audit_value(from) %> → <%= audit_value(to) %></li>
+  <% end %>
+</ul>
+
+<% if @proposal.justification.present? %>
+  <p><em>"<%= @proposal.justification %>"</em></p>
+<% end %>
+
+<p>
+  Review it in
+  <%= link_to "your compliventory inbox", @proposal.lane == "compliance" ? compliance_url : inbox_url %>.
+</p>

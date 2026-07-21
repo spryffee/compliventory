@@ -1,0 +1,48 @@
+<% content_for :title, "Compliance inbox — Compliventory" %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-3xl mx-auto">
+  <h1 class="page-title mb-1">Compliance inbox</h1>
+  <p class="page-subtitle mb-6">New submissions awaiting approval and ⚖ field changes awaiting review.</p>
+
+  <h2 class="section-label mb-2">New submissions</h2>
+  <% pending_assets = @pending_vendors + @pending_systems %>
+  <% if pending_assets.empty? %>
+    <div class="card p-5 text-sm text-gray-500 mb-8">No pending submissions.</div>
+  <% else %>
+    <div class="space-y-4 mb-8">
+      <% pending_assets.each do |asset| %>
+        <div class="card p-5">
+          <div class="text-sm font-medium">
+            <%= link_to asset.name, asset, class: "text-gray-900 hover:text-pine-700" %>
+            <span class="pill bg-gray-100 text-gray-600 ml-1"><%= asset.model_name.human %></span>
+          </div>
+          <div class="text-xs text-gray-500 mt-0.5">
+            owner <%= asset.owner.name %> · submitted <%= audit_timestamp(asset.created_at) %>
+          </div>
+          <% if asset.description.present? %>
+            <div class="mt-2 text-sm text-gray-600"><%= asset.description %></div>
+          <% end %>
+          <%= form_with url: url_for([ :approve, asset ]), class: "mt-4 flex flex-wrap items-center gap-2" do %>
+            <%= text_field_tag :comment, nil, placeholder: "Optional comment", class: "input flex-1 min-w-40 py-1.5 text-sm" %>
+            <%= submit_tag "Approve", class: "btn btn-primary btn-sm" %>
+            <%= submit_tag "Reject", formaction: url_for([ :reject, asset ]), class: "btn btn-danger btn-sm",
+                  data: { turbo_confirm: "Reject and remove #{asset.name}? The snapshot stays in the audit log." } %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h2 class="section-label mb-2">Field changes ⚖</h2>
+  <% if @proposals.empty? %>
+    <div class="card p-5 text-sm text-gray-500">No pending field changes.</div>
+  <% else %>
+    <div class="space-y-4">
+      <% @proposals.each do |proposal| %>
+        <%= render "change_proposals/proposal", proposal: proposal, show_asset: true %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

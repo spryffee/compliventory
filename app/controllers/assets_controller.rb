@@ -5,8 +5,7 @@
 class AssetsController < ApplicationController
   include Pagy::Method
 
-  before_action :set_asset, only: %i[show edit update]
-  before_action :require_editability!, only: %i[edit update]
+  before_action :set_asset, only: %i[show edit update approve reject]
 
   helper_method :policy
 
@@ -15,6 +14,7 @@ class AssetsController < ApplicationController
   end
 
   def show
+    @proposals = @asset.change_proposals.includes(:proposer).oldest_first
     @audit_events = AuditEvent.for_target(@asset).recent_first.limit(30)
   end
 
@@ -40,15 +40,39 @@ class AssetsController < ApplicationController
   end
 
   def update
-    result = Assets::Editor.call(asset: @asset, actor: current_user, attributes: edit_params)
+    result = Assets::Editor.call(
+      asset: @asset, actor: current_user,
+      attributes: edit_params, justification: params[:justification]
+    )
     if result.success
-      redirect_to @asset, notice: "Saved."
+      redirect_to @asset, notice: outcome_notice(result.value)
     elsif result.code == :validation_failed
       @asset = result.context[:record]
       @form_fields = policy.editable_fields
       render :edit, status: :unprocessable_content
     else
       render "shared/forbidden", status: :forbidden
+    end
+  end
+
+  # Compliance decisions on pending submissions — the only pending_approval →
+  # active path (approve), or hard delete with an audited snapshot (reject).
+  def approve
+    result = Assets::Approver.call(asset: @asset, actor: current_user, comment: params[:comment])
+    if result.success
+      redirect_to compliance_path, notice: "#{@asset.name} approved — now active."
+    else
+      decision_failure(result)
+    end
+  end
+
+  def reject
+    name = @asset.name
+    result = Assets::Rejecter.call(asset: @asset, actor: current_user, comment: params[:comment])
+    if result.success
+      redirect_to compliance_path, notice: "#{name} rejected and removed. The snapshot is in the audit log."
+    else
+      decision_failure(result)
     end
   end
 
@@ -70,8 +94,22 @@ class AssetsController < ApplicationController
     @policy ||= AssetPolicy.for(current_user, @asset)
   end
 
-  def require_editability!
-    render "shared/forbidden", status: :forbidden unless policy.may_edit_anything?
+  def outcome_notice(outcome)
+    parts = []
+    parts << "Changes saved." if outcome.applied_changes.any?
+    outcome.proposals.each do |proposal|
+      reviewer = proposal.lane == "compliance" ? "compliance" : "the owner"
+      parts << "#{proposal.attribute_changes.size} #{'change'.pluralize(proposal.attribute_changes.size)} sent to #{reviewer} for review."
+    end
+    parts.empty? ? "No changes." : parts.join(" ")
+  end
+
+  def decision_failure(result)
+    if result.code == :not_pending
+      redirect_to @asset, alert: "Only pending submissions can be decided."
+    else
+      render "shared/forbidden", status: :forbidden
+    end
   end
 
   # Submissions may set everything except status (the Submitter decides it) and

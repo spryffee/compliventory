@@ -28,19 +28,29 @@ class AssetPolicy
     return true if @user.compliance?
     # pending_approval → active happens only via compliance; nobody else touches
     # the status of an unapproved asset.
-    return false if field == :status && @asset.pending_approval?
+    return false if field == :status && pending?
     return regular_field?(field) if owner_or_delegate?
     return OWNERSHIP_FIELDS.include?(field) if @user.admin?
 
     false
   end
 
-  def editable_fields
-    @asset.class::EDITABLE_FIELDS.select { |field| editable_directly?(field) }
+  # Fields that may at least enter a proposal lane. risk_tier is compliance-set
+  # only — not even proposable; the status of a pending asset moves only via
+  # the compliance approve path.
+  def proposable?(field)
+    field = field.to_sym
+    return true if @user.compliance?
+    return false if @asset.class::COMPLIANCE_SET_ONLY_FIELDS.include?(field)
+    return false if field == :status && pending?
+
+    true
   end
 
-  def may_edit_anything?
-    editable_fields.any?
+  # Everything the edit form may show the actor: applied directly or routed
+  # into a proposal lane on save.
+  def editable_fields
+    @asset.class::EDITABLE_FIELDS.select { |field| editable_directly?(field) || proposable?(field) }
   end
 
   def may_manage_delegates?
@@ -48,6 +58,12 @@ class AssetPolicy
   end
 
   private
+
+  # The PERSISTED status: the policy is also consulted mid-edit, after
+  # assign_attributes — an in-memory "active" must not unlock a pending row.
+  def pending?
+    (@asset.status_in_database || @asset.status) == "pending_approval"
+  end
 
   def regular_field?(field)
     !@asset.class::COMPLIANCE_FIELDS.include?(field)
