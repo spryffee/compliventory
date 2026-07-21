@@ -32,6 +32,8 @@ Rails.application.routes.draw do
     end
   end
 
+  patch "/table_preferences/:table" => "table_preferences#update", as: :table_preference
+
   get "/inbox"      => "inbox#show",      as: :inbox
   get "/compliance" => "compliance#show", as: :compliance
   get "/audit"      => "audit_events#index", as: :audit_events

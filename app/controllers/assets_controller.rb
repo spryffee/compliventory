@@ -10,7 +10,8 @@ class AssetsController < ApplicationController
   helper_method :policy
 
   def index
-    @pagy, @assets = pagy(:offset, asset_scope, limit: 25)
+    @table = table_class.new(user: current_user, params: params)
+    @pagy, @assets = pagy(:offset, @table.scope, limit: 25)
   end
 
   def show
@@ -82,8 +83,8 @@ class AssetsController < ApplicationController
     raise NotImplementedError
   end
 
-  def asset_scope
-    asset_class.includes(:owner).order(:name)
+  def table_class
+    raise NotImplementedError
   end
 
   def set_asset

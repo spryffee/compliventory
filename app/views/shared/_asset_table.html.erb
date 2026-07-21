@@ -1,0 +1,74 @@
+<%# Dynamic asset table (DESIGN.md, "Dynamic tables"): search + per-column
+    filters as query params, sortable headers, column picker persisted to
+    users.ui_preferences. Locals: table (AssetTable), assets, pagy. %>
+<% base_path = polymorphic_path(table.asset_class) %>
+
+<div class="flex flex-wrap items-start gap-3 mb-4">
+  <%= form_with url: base_path, method: :get, data: { controller: "autosubmit" }, class: "flex flex-wrap items-center gap-2 grow" do |f| %>
+    <%= f.hidden_field :sort, value: params[:sort] if params[:sort].present? %>
+    <%= f.hidden_field :dir, value: params[:dir] if params[:dir].present? %>
+    <%= f.search_field :q, value: table.query, placeholder: "Search name or description…", class: "input w-60 py-1.5 text-sm" %>
+    <% table.filters.each do |filter| %>
+      <%= f.select filter.key, filter.options,
+            { include_blank: "All #{filter.label.downcase.pluralize}", selected: table.filter_value(filter.key) },
+            class: "input w-44 py-1.5 text-sm", data: { action: "change->autosubmit#submit" } %>
+    <% end %>
+    <% if table.filtered? %>
+      <%= link_to "Clear", base_path, class: "btn-quiet" %>
+    <% end %>
+  <% end %>
+
+  <div class="relative" data-controller="menu">
+    <button type="button" class="btn btn-secondary btn-sm" data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-haspopup="true">
+      Columns
+    </button>
+    <div class="hidden absolute right-0 mt-1 w-56 card shadow-lg z-10 p-3" data-menu-target="panel">
+      <%= form_with url: table_preference_path(table.table_key), method: :patch do %>
+        <div class="space-y-1.5 mb-3">
+          <% table.columns.each do |column| %>
+            <label class="flex items-center gap-2 text-sm text-gray-700 <%= "opacity-50" if column.key == "name" %>">
+              <%= check_box_tag "columns[]", column.key, table.visible_columns.include?(column),
+                    disabled: column.key == "name", id: "col_#{table.table_key}_#{column.key}" %>
+              <%= column.label %>
+            </label>
+          <% end %>
+        </div>
+        <%= submit_tag "Apply", class: "btn btn-primary btn-xs w-full" %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <% table.visible_columns.each do |column| %>
+          <th><%= table_sort_link(table, column) %></th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <% if assets.empty? %>
+        <tr>
+          <td colspan="<%= table.visible_columns.size %>" class="text-gray-500">
+            <% if table.filtered? %>
+              No <%= table.table_key %> match — <%= link_to "clear filters", base_path, class: "text-pine-700 font-medium hover:underline" %>.
+            <% else %>
+              No <%= table.table_key %> yet — <%= link_to "add the first one", new_polymorphic_path(table.asset_class), class: "text-pine-700 font-medium hover:underline" %>.
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      <% assets.each do |asset| %>
+        <tr class="row-hover">
+          <% table.visible_columns.each do |column| %>
+            <td class="<%= column.key == "name" ? "font-medium" : "text-gray-600" %>"><%= asset_cell(asset, column.key) %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= render "shared/pagination", pagy: pagy %>

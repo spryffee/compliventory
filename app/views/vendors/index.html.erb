@@ -9,33 +9,5 @@
   </div>
   <p class="page-subtitle mb-6">Every third party the company relies on.</p>
 
-  <div class="panel">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Status</th>
-          <th>Risk tier</th>
-          <th>Owner</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if @assets.empty? %>
-          <tr><td colspan="5" class="text-gray-500">No vendors yet — <%= link_to "add the first one", new_vendor_path, class: "text-pine-700 font-medium hover:underline" %>.</td></tr>
-        <% end %>
-        <% @assets.each do |vendor| %>
-          <tr class="row-hover">
-            <td class="font-medium"><%= link_to vendor.name, vendor, class: "text-gray-900 hover:text-pine-700" %></td>
-            <td class="text-gray-600"><%= display_value(vendor.category) %></td>
-            <td><%= status_pill(vendor.status) %></td>
-            <td class="text-gray-600"><%= display_value(vendor.risk_tier) %></td>
-            <td class="text-gray-600"><%= vendor.owner.name %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-
-  <%= render "shared/pagination", pagy: @pagy %>
+  <%= render "shared/asset_table", table: @table, assets: @assets, pagy: @pagy %>
 </div>

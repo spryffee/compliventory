@@ -4,4 +4,8 @@ class VendorsController < AssetsController
   def asset_class
     Vendor
   end
+
+  def table_class
+    VendorTable
+  end
 end

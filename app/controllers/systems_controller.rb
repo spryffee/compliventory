@@ -5,7 +5,7 @@ class SystemsController < AssetsController
     System
   end
 
-  def asset_scope
-    System.includes(:owner, :vendor).order(:name)
+  def table_class
+    SystemTable
   end
 end
