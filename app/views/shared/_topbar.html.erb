@@ -74,3 +74,8 @@
   </div>
 </div>
 <div class="h-12" aria-hidden="true"></div>
+<%# Below the fixed bar, at content width — the layout deliberately doesn't
+    render the flash (see layouts/application). %>
+<div class="max-w-5xl mx-auto">
+  <%= render "shared/flash" %>
+</div>

@@ -25,8 +25,11 @@
   </head>
 
   <body>
+    <%# Flash is not rendered here: a layout-level flash would sit under the
+        fixed top bar and stretch to the full container width. Pages with a
+        top bar get it from shared/_topbar (below the bar, content-width);
+        auth pages render it inside their own narrow column. %>
     <main class="container mx-auto px-5 py-10">
-      <%= render "shared/flash" %>
       <%= yield %>
     </main>
   </body>
