@@ -32,6 +32,11 @@ module Compliventory
       g.orm :active_record, primary_key_type: :uuid
     end
 
+    # Public demo mode (DEMO_MODE=true): exposes a persona-picker sign-in over
+    # shared seed data and enables the nightly data reset. Read once at boot —
+    # flipping it needs a restart. See app/models/demo.rb.
+    config.x.demo_mode = ActiveModel::Type::Boolean.new.cast(ENV["DEMO_MODE"])
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

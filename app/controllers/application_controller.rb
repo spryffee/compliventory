@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   # (login, OIDC callback, dev sign-in) skip this.
   before_action :require_login!
 
-  helper_method :current_user, :signed_in?
+  helper_method :current_user, :signed_in?, :demo_mode?
 
   private
 
@@ -26,6 +26,10 @@ class ApplicationController < ActionController::Base
 
   def signed_in?
     current_user.present?
+  end
+
+  def demo_mode?
+    Demo.enabled?
   end
 
   def sign_in(user)

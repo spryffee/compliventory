@@ -40,6 +40,17 @@ module ActiveSupport
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
+
+    # Runs the block with DEMO_MODE on (config.x.demo_mode, read by Demo.enabled?),
+    # restoring the previous value afterwards. Safe under parallel tests: each
+    # worker is its own process and tests within it run sequentially.
+    def with_demo_mode
+      original = Rails.configuration.x.demo_mode
+      Rails.configuration.x.demo_mode = true
+      yield
+    ensure
+      Rails.configuration.x.demo_mode = original
+    end
   end
 end
 

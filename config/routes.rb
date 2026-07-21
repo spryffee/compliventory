@@ -52,6 +52,11 @@ Rails.application.routes.draw do
 
   root "dashboard#index"
 
+  # Public-demo persona-picker sign-in. Always declared; the controller 404s
+  # unless DEMO_MODE is on (Demo.enabled?). See Demo::SessionsController.
+  get  "/demo/sign-in" => "demo/sessions#new",    as: :demo_sign_in
+  post "/demo/sign-in" => "demo/sessions#create"
+
   # Development-only one-click sign-in. Declared only in development, so these
   # routes simply do not exist in production (404), independent of the controller
   # guard. See Dev::SessionsController.

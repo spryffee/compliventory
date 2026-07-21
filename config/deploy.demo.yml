@@ -1,0 +1,45 @@
+# Public-demo destination override — deploy with:  kamal deploy -d demo
+#
+# Layered on top of config/deploy.yml. Fill the shared bits (servers, registry)
+# in that base file once; this file adds only what makes the instance a demo:
+# DEMO_MODE, the demo host, and a Postgres accessory on the same box.
+#
+# Placeholders marked  # ← EDIT  must be set before deploying.
+
+# TLS via the Kamal proxy (Let's Encrypt). Requires config.force_ssl (already on
+# in production.rb).
+proxy:
+  ssl: true
+  host: demo.example.com          # ← EDIT: your demo domain (DNS A record → the server)
+
+env:
+  clear:
+    SOLID_QUEUE_IN_PUMA: true      # jobs (incl. the nightly reset) run inside Puma
+    DEMO_MODE: true                # persona-picker sign-in + nightly data reset
+    COMPLIVENTORY_HOST: https://demo.example.com   # ← EDIT: same as proxy.host
+    # Point the app at the Postgres accessory below (Kamal wires it on the
+    # private Docker network under the accessory's name: <service>-db).
+    COMPLIVENTORY_DATABASE_HOST: compliventory-db
+    COMPLIVENTORY_DATABASE_USER: compliventory
+    # OIDC/SMTP are intentionally unset: the demo signs in via personas and
+    # drops outgoing mail (nothing is actually delivered).
+  secret:
+    - RAILS_MASTER_KEY
+    - COMPLIVENTORY_DATABASE_PASSWORD
+
+# Postgres on the same server, private to the app. `db:prepare` (run by the
+# image entrypoint on boot) creates the primary + Solid cache/queue/cable
+# databases, since the accessory user is a superuser.
+accessories:
+  db:
+    image: postgres:16
+    host: 192.168.0.1              # ← EDIT: same host as servers.web in deploy.yml
+    port: "127.0.0.1:5432:5432"    # bound to localhost only — not exposed publicly
+    env:
+      clear:
+        POSTGRES_USER: compliventory
+        POSTGRES_DB: compliventory_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
