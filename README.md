@@ -1,7 +1,11 @@
 # compliventory
 
-The company's vendors and systems, accounted for. A self-hosted inventory with
-owner/compliance change control and an append-only audit log.
+The company's vendors and systems, accounted for. A self-hosted open source
+inventory with owner/compliance change control and an append-only audit log.
+
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+![Rails 8.1](https://img.shields.io/badge/Rails-8.1-CC0000.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13%2B-336791.svg)
 
 > **Early stage — inventory MVP.** Vendor assessment and GDPR records of
 > processing (RoPA) are planned on top of this core.
@@ -40,4 +44,4 @@ bin/rails db:seed         # demo data → open http://localhost:3000/dev/sign-in
 
 ## License
 
-TBD.
+[GNU Affero General Public License v3.0](LICENSE).
