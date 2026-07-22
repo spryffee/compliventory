@@ -107,15 +107,29 @@ Keep SMTP unset so notification emails are dropped rather than delivered. Everyt
 
 A ready-made destination override lives at
 [`config/deploy.demo.yml`](https://github.com/spryffee/compliventory/blob/main/config/deploy.demo.yml):
-it sets `DEMO_MODE`, the demo host, and a Postgres accessory on the same box. Fill the
-shared bits (servers, registry) in `config/deploy.yml`, edit the `# ← EDIT` placeholders
-in the override, then:
+it sets `DEMO_MODE` and a Postgres accessory on the same box. Its infra-specific values
+(your domain, server IP, DB password) are **not committed** — they live in a gitignored
+`.env` at the repo root, which the override loads via dotenv at deploy time, so nothing
+private lands in the repo and there's nothing to `export` each time. Copy the template and
+fill it in once:
 
 ```sh
-export COMPLIVENTORY_DATABASE_PASSWORD=$(openssl rand -hex 24)   # app + DB read this
+cp .env.example .env
+$EDITOR .env      # set DEMO_DOMAIN, DEMO_SERVER_IP, COMPLIVENTORY_DATABASE_PASSWORD
+```
+
+Then (filling the registry in `config/deploy.yml` first):
+
+```sh
 kamal setup -d demo                    # first deploy: provisions the DB accessory + app
 kamal app exec -d demo 'bin/rails db:seed'   # one-time: load the demo dataset
 ```
+
+`config/deploy.demo.yml` loads `.env` and reads those values through ERB; `ENV.fetch`
+raises if one is missing, so you can't ship a placeholder. The destination overrides
+`servers.web` from `DEMO_SERVER_IP`, so the base `deploy.yml` keeps its placeholder and
+your real host stays in `.env`. An explicit shell `export` still wins over `.env` if you
+ever want to override for one command.
 
 The image entrypoint runs `db:prepare` on boot (creating the primary + Solid databases);
 `db:seed` then loads the personas and inventory. Subsequent deploys are just
