@@ -109,13 +109,14 @@ A ready-made destination override lives at
 [`config/deploy.demo.yml`](https://github.com/spryffee/compliventory/blob/main/config/deploy.demo.yml):
 it sets `DEMO_MODE` and a Postgres accessory on the same box. Its infra-specific values
 (your domain, server IP, DB password) are **not committed** — they live in a gitignored
-`.env` at the repo root, which the override loads via dotenv at deploy time, so nothing
-private lands in the repo and there's nothing to `export` each time. Copy the template and
-fill it in once:
+per-destination env file, `.env.demo`, which the override loads via dotenv at deploy time,
+so nothing private lands in the repo and there's nothing to `export` each time. One env
+file per Kamal destination (`.env.demo`, and later `.env.production`, …) means the names
+inside need no prefix. Copy the template and fill it in once:
 
 ```sh
-cp .env.example .env
-$EDITOR .env      # set DEMO_DOMAIN, DEMO_SERVER_IP, COMPLIVENTORY_DATABASE_PASSWORD
+cp .env.example .env.demo
+$EDITOR .env.demo      # set DOMAIN, SERVER_IP, COMPLIVENTORY_DATABASE_PASSWORD
 ```
 
 Then (filling the registry in `config/deploy.yml` first):
@@ -125,10 +126,10 @@ kamal setup -d demo                    # first deploy: provisions the DB accesso
 kamal app exec -d demo 'bin/rails db:seed'   # one-time: load the demo dataset
 ```
 
-`config/deploy.demo.yml` loads `.env` and reads those values through ERB; `ENV.fetch`
+`config/deploy.demo.yml` loads `.env.demo` and reads those values through ERB; `ENV.fetch`
 raises if one is missing, so you can't ship a placeholder. The destination overrides
-`servers.web` from `DEMO_SERVER_IP`, so the base `deploy.yml` keeps its placeholder and
-your real host stays in `.env`. An explicit shell `export` still wins over `.env` if you
+`servers.web` from `SERVER_IP`, so the base `deploy.yml` keeps its placeholder and your
+real host stays in `.env.demo`. An explicit shell `export` still wins over the file if you
 ever want to override for one command.
 
 The image entrypoint runs `db:prepare` on boot (creating the primary + Solid databases);

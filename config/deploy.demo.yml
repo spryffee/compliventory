@@ -1,16 +1,18 @@
 # Public-demo destination override — deploy with:  kamal deploy -d demo
 #
 # Infra-specific values (domain, server IP, DB password) live in a gitignored
-# `.env` at the repo root — nothing private is committed. The ERB below loads
-# that file, so `kamal deploy -d demo` just works with no manual exports (an
+# `.env.demo` at the repo root — nothing private is committed. This is the
+# per-destination env file (one per Kamal destination: .env.demo, .env.production,
+# …), so names inside need no prefix — the files never load together. The ERB
+# below loads it, so `kamal deploy -d demo` just works with no manual exports (an
 # explicit `export` still wins, since Dotenv.load never overrides a set var).
-# Copy `.env.example` to `.env` and fill it in. ENV.fetch raises at deploy time
-# if a value is missing, so you can't ship a placeholder.
-<% require "dotenv"; Dotenv.load(".env") %>
+# Copy `.env.example` to `.env.demo` and fill it in. ENV.fetch raises at deploy
+# time if a value is missing, so you can't ship a placeholder.
+<% require "dotenv"; Dotenv.load(".env.demo") %>
 
 servers:
   web:
-    - <%= ENV.fetch("DEMO_SERVER_IP") { raise "Set DEMO_SERVER_IP before deploying the demo" } %>
+    - <%= ENV.fetch("SERVER_IP") { raise "Set SERVER_IP before deploying the demo" } %>
 
 # Connect with the ed25519 deploy key only. This sidesteps net-ssh signing the
 # default ECDSA key with Ruby's OpenSSL 3 (which fails: "EVP_PKEY_sign … ECDSA
@@ -24,13 +26,13 @@ ssh:
 # in production.rb).
 proxy:
   ssl: true
-  host: <%= ENV.fetch("DEMO_DOMAIN") { raise "Set DEMO_DOMAIN before deploying the demo" } %>
+  host: <%= ENV.fetch("DOMAIN") { raise "Set DOMAIN before deploying the demo" } %>
 
 env:
   clear:
     SOLID_QUEUE_IN_PUMA: true      # jobs (incl. the nightly reset) run inside Puma
     DEMO_MODE: true                # persona-picker sign-in + nightly data reset
-    COMPLIVENTORY_HOST: https://<%= ENV.fetch("DEMO_DOMAIN") %>
+    COMPLIVENTORY_HOST: https://<%= ENV.fetch("DOMAIN") %>
     # Point the app at the Postgres accessory below (Kamal wires it on the
     # private Docker network under the accessory's name: <service>-db).
     COMPLIVENTORY_DATABASE_HOST: compliventory-db
@@ -47,7 +49,7 @@ env:
 accessories:
   db:
     image: postgres:16
-    host: <%= ENV.fetch("DEMO_SERVER_IP") %>
+    host: <%= ENV.fetch("SERVER_IP") %>
     port: "127.0.0.1:5432:5432"    # bound to localhost only — not exposed publicly
     env:
       clear:
