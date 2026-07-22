@@ -22,8 +22,15 @@ module Asset
     status == "pending_approval"
   end
 
+  # Ownership is judged by the PERSISTED owner, never an owner_id assigned in
+  # memory. Otherwise an editor could self-assign ownership (owner_id = self) and
+  # pass the owner-only edit gate before the change is ever reviewed — a
+  # privilege escalation, since the Editor checks this right after
+  # assign_attributes. `_in_database` is the stored value (nil for a new record,
+  # where the freshly-set owner_id is the right thing to trust).
   def owned_or_delegated_to?(user)
-    owner_id == user.id || delegations.exists?(user_id: user.id)
+    current_owner_id = owner_id_in_database || owner_id
+    current_owner_id == user.id || delegations.exists?(user_id: user.id)
   end
 
   # "vendor" / "system" — prefix for audit event types (vendor.updated, …).

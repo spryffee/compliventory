@@ -57,6 +57,36 @@ module Assets
       assert_equal %w[description], proposal.attribute_changes.keys
     end
 
+    # Security: an editor must not be able to grant themselves ownership by
+    # proposing owner_id = self. The gate checks the PERSISTED owner, so this
+    # can only become a proposal the CURRENT owner decides — never a direct edit.
+    test "a non-owner cannot self-assign ownership; it routes to the current owner" do
+      acme = vendors(:acme) # owned by :owner
+      attacker = users(:employee) # not owner, not delegate
+
+      result = Editor.call(asset: acme, actor: attacker, attributes: { owner_id: attacker.id })
+
+      assert result.success
+      assert_empty result.value.applied_changes # NOT applied directly
+      assert_equal users(:owner).id, acme.reload.owner_id # ownership unchanged
+
+      proposal = result.value.proposals.sole
+      assert_equal "owner", proposal.lane
+      assert_equal [ users(:owner).id, attacker.id ], proposal.attribute_changes["owner_id"]
+      assert_includes proposal.reviewers, users(:owner) # the current owner reviews
+      assert_not_includes proposal.reviewers, attacker # attacker can't approve their own grab
+    end
+
+    test "the owner may reassign ownership directly" do
+      acme = vendors(:acme) # owned by :owner
+      result = Editor.call(asset: acme, actor: users(:owner), attributes: { owner_id: users(:employee).id })
+
+      assert result.success
+      assert_equal %w[owner_id], result.value.applied_changes.keys
+      assert_empty result.value.proposals
+      assert_equal users(:employee).id, acme.reload.owner_id
+    end
+
     test "compliance edits everything directly, no proposals" do
       result = Editor.call(asset: systems(:tracker), actor: users(:compliance),
                            attributes: { criticality: "critical", description: "x" })
