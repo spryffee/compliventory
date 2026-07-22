@@ -27,6 +27,17 @@ module Assets
 
       @asset.assign_attributes(@attributes)
       diff = @asset.changes.except("created_at", "updated_at")
+
+      # A blank form input submits "" where the column is nil — Rails dirty
+      # tracking flags that as a change (nil → ""), but nothing meaningful moved.
+      # Drop such blank↔blank no-ops so they're neither saved nor audited/proposed
+      # (restore reverts the in-memory value to the stored one).
+      noop = diff.select { |_, (old, new)| old.blank? && new.blank? }.keys
+      if noop.any?
+        @asset.restore_attributes(noop)
+        diff = diff.except(*noop)
+      end
+
       return success(Outcome.new(asset: @asset, applied_changes: {}, proposals: [])) if diff.empty?
 
       denied = diff.keys.reject { |field| policy.editable_directly?(field) || policy.proposable?(field) }

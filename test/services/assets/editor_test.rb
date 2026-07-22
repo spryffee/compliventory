@@ -29,6 +29,34 @@ module Assets
       assert_equal vendors(:acme).id, event.target_id("Vendor")
     end
 
+    test "blank form fields ('' where the column is nil) are not counted as changes" do
+      result = nil
+      assert_difference("AuditEvent.where(event_type: 'vendor.updated').count", 1) do
+        # Mimics the form: one real edit; the untouched empty fields submit "".
+        result = Editor.call(
+          asset: vendors(:acme), actor: users(:owner),
+          attributes: { description: "New description", notes: "", contact_name: "", contact_email: "" }
+        )
+      end
+      assert result.success
+      assert_equal %w[description], result.value.applied_changes.keys
+      assert_empty result.value.proposals
+
+      event = AuditEvent.where(event_type: "vendor.updated").recent_first.first
+      assert_equal %w[description], event.attribute_changes.keys
+      assert_nil vendors(:acme).reload.notes # "" no-op was not persisted
+    end
+
+    test "a non-owner's real edit alongside blank fields proposes only the real change" do
+      result = Editor.call(
+        asset: vendors(:acme), actor: users(:employee),
+        attributes: { description: "Proposed", notes: "", contact_name: "", contact_email: "" }
+      )
+      assert result.success
+      proposal = result.value.proposals.sole
+      assert_equal %w[description], proposal.attribute_changes.keys
+    end
+
     test "compliance edits everything directly, no proposals" do
       result = Editor.call(asset: systems(:tracker), actor: users(:compliance),
                            attributes: { criticality: "critical", description: "x" })
