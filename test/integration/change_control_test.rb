@@ -109,6 +109,20 @@ class ChangeControlTest < ActionDispatch::IntegrationTest
     assert proposal.stale?("description")
   end
 
+  test "an owner change in a proposal shows names, not ids" do
+    new_owner = users(:delegate)
+    ChangeProposal.create!(
+      asset: vendors(:acme), proposer: users(:employee), lane: "owner",
+      attribute_changes: { "owner_id" => [ users(:owner).id, new_owner.id ] }
+    )
+
+    sign_in_as users(:owner)
+    get inbox_path
+    assert_includes response.body, users(:owner).name
+    assert_includes response.body, new_owner.name
+    assert_not_includes response.body, new_owner.id
+  end
+
   # --- compliance inbox ----------------------------------------------------
 
   test "members and admins may not open /compliance" do

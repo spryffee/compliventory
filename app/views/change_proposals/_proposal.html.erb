@@ -21,11 +21,11 @@
     <% proposal.attribute_changes.each do |field, (base, proposed)| %>
       <div class="text-sm text-gray-700">
         <span class="font-medium"><%= field.humanize %></span>:
-        <span class="text-gray-500"><%= audit_value(base) %></span>
+        <span class="text-gray-500"><%= change_value(field, base) %></span>
         <% if proposal.stale?(field) %>
-          <span class="text-amber-600" title="Changed since this was proposed">→ now <%= audit_value(proposal.current_value(field)) %></span>
+          <span class="text-amber-600" title="Changed since this was proposed">→ now <%= change_value(field, proposal.current_value(field)) %></span>
         <% end %>
-        → <span class="font-medium text-gray-900"><%= audit_value(proposed) %></span>
+        → <span class="font-medium text-gray-900"><%= change_value(field, proposed) %></span>
       </div>
     <% end %>
   </div>

@@ -5,7 +5,7 @@
 
 <ul>
   <% @changes.each do |field, (from, to)| %>
-    <li><strong><%= field.humanize %></strong>: <%= audit_value(from) %> → <%= audit_value(to) %></li>
+    <li><strong><%= field.humanize %></strong>: <%= change_value(field, from) %> → <%= change_value(field, to) %></li>
   <% end %>
 </ul>
 

@@ -17,7 +17,7 @@
           <% event.attribute_changes.each do |field, (from, to)| %>
             <div class="text-xs text-gray-600">
               <span class="font-medium"><%= field.humanize %></span>:
-              <%= audit_value(from) %> → <%= audit_value(to) %>
+              <%= change_value(field, from) %> → <%= change_value(field, to) %>
             </div>
           <% end %>
         </div>

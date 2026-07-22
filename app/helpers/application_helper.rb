@@ -39,6 +39,21 @@ module ApplicationHelper
     end
   end
 
+  # A field's value in a change diff (proposals, audit trail, mailers). Reference
+  # columns store UUIDs; resolve them to the referenced record's name so a diff
+  # reads "Owner: Alice → Bob", not a pair of ids. Falls back to the raw id if
+  # the record is gone (hard-deleted history), and to audit_value otherwise.
+  def change_value(field, value)
+    case field.to_s
+    when "owner_id", "technical_owner_id"
+      value.present? ? (User.find_by(id: value)&.name || audit_value(value)) : audit_value(value)
+    when "vendor_id"
+      value.present? ? (Vendor.find_by(id: value)&.name || audit_value(value)) : audit_value(value)
+    else
+      audit_value(value)
+    end
+  end
+
   # One labelled row on an asset detail page.
   def detail_row(label, value = nil, &block)
     content = block ? capture(&block) : value
