@@ -14,6 +14,12 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
+  # Weekly reminder to compliance of vendors needing a risk review. The job is a
+  # no-op when there's nothing to review, so it's safe to always schedule.
+  assessment_review_digest:
+    class: "Assessments::WeeklyReviewDigestJob"
+    schedule: every monday at 8am
+
   # Public-demo nightly reset. No-op unless DEMO_MODE is on (the job guards on
   # Demo.enabled?), so this entry is safe on a real production instance too.
   demo_reset:

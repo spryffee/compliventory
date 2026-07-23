@@ -1,0 +1,13 @@
+<p>
+  <%= @assessor %> completed a risk assessment for
+  <%= link_to @vendor.name, vendor_url(@vendor) %>.
+</p>
+
+<ul>
+  <li>Decision: <strong><%= @assessment.decision.humanize %></strong></li>
+  <li>Residual risk: <%= @assessment.residual_risk.humanize %></li>
+  <% if @assessment.conditions.present? %>
+    <li>Conditions: <%= @assessment.conditions %></li>
+  <% end %>
+  <li>Next review: <%= @assessment.next_review_on.strftime("%b %-d, %Y") %></li>
+</ul>

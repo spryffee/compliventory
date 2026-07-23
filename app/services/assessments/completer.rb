@@ -51,9 +51,20 @@ module Assessments
         )
       end
 
+      notify_owner(vendor)
       success(@assessment)
     rescue ActiveRecord::RecordInvalid => e
       failure(:validation_failed, record: e.record)
+    end
+
+    private
+
+    def notify_owner(vendor)
+      owner = vendor.owner
+      return if owner == @actor || !owner.active?
+
+      AssessmentMailer.with(recipient: owner, assessor: @actor.name, assessment: @assessment)
+                      .completed.deliver_later
     end
   end
 end

@@ -44,4 +44,30 @@ class NotificationsTest < ActionMailer::TestCase
     assert_match "rejected", mail.subject
     assert_match "audit log", mail.body.encoded
   end
+
+  test "assessment completed" do
+    assessment = Assessment.create!(
+      asset: vendors(:acme), assessor: users(:compliance), status: "completed",
+      residual_risk: "medium", decision: "approved_with_conditions", conditions: "Sign an updated DPA",
+      next_review_on: Date.current + 1.year, completed_at: Time.current
+    )
+    mail = AssessmentMailer.with(recipient: users(:owner), assessor: "Clara Compliance", assessment: assessment).completed
+
+    assert_equal [ users(:owner).email ], mail.to
+    assert_match "Acme Cloud", mail.subject
+    assert_match "Approved with conditions", mail.body.encoded
+    assert_match "Sign an updated DPA", mail.body.encoded
+  end
+
+  test "weekly review digest" do
+    overdue = Vendor.create!(name: "Late Co", owner: users(:owner), status: "active", next_review_on: 5.days.ago)
+    mail = AssessmentMailer.with(
+      recipient: users(:compliance), overdue: [ overdue ], never_assessed: [ vendors(:acme) ]
+    ).weekly_digest
+
+    assert_equal [ users(:compliance).email ], mail.to
+    assert_match "2 vendors need a risk review", mail.subject
+    assert_match "Late Co", mail.body.encoded
+    assert_match "Acme Cloud", mail.body.encoded
+  end
 end

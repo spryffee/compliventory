@@ -2,6 +2,8 @@ require "test_helper"
 
 module Assessments
   class LifecycleTest < ActiveSupport::TestCase
+    include ActionMailer::TestHelper
+
     setup do
       Current.correlation_id = SecureRandom.uuid
       @vendor = vendors(:acme)
@@ -126,6 +128,23 @@ module Assessments
       assert_equal :not_permitted,
                    Completer.call(assessment: assessment, actor: users(:owner), residual_risk: "low",
                                   decision: "approved", next_review_on: Date.current + 1.year).code
+    end
+
+    test "completion notifies the vendor owner" do
+      assessment = Starter.call(vendor: @vendor, actor: @compliance).value # acme owner is Oscar, not the assessor
+      assert_enqueued_emails 1 do
+        Completer.call(assessment: assessment, actor: @compliance, residual_risk: "low",
+                       decision: "approved", next_review_on: Date.current + 1.year)
+      end
+    end
+
+    test "no owner notification when the owner runs the assessment themselves" do
+      vendor = Vendor.create!(name: "Self-owned Co", owner: @compliance, status: "active")
+      assessment = Starter.call(vendor: vendor, actor: @compliance).value
+      assert_no_enqueued_emails do
+        Completer.call(assessment: assessment, actor: @compliance, residual_risk: "low",
+                       decision: "approved", next_review_on: Date.current + 1.year)
+      end
     end
 
     # --- Canceller -----------------------------------------------------------

@@ -1,0 +1,24 @@
+<p>These vendors need a risk review:</p>
+
+<% if @overdue.any? %>
+  <h3>Overdue (<%= @overdue.size %>)</h3>
+  <ul>
+    <% @overdue.each do |vendor| %>
+      <li>
+        <%= link_to vendor.name, vendor_url(vendor) %> —
+        review was due <%= vendor.next_review_on.strftime("%b %-d, %Y") %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @never_assessed.any? %>
+  <h3>Never assessed (<%= @never_assessed.size %>)</h3>
+  <ul>
+    <% @never_assessed.each do |vendor| %>
+      <li><%= link_to vendor.name, vendor_url(vendor) %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<p><%= link_to "Open the compliance inbox", compliance_url %></p>
