@@ -9,7 +9,8 @@ class AssessmentsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:compliance)
     get vendor_path(@vendor)
 
-    assert_includes response.body, "Inherent risk"
+    assert_includes response.body, "computed from inventory"
+    assert_includes response.body, "Why inherent risk is high"
     assert_includes response.body, "Start assessment"
   end
 
@@ -17,7 +18,7 @@ class AssessmentsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:owner)
     get vendor_path(@vendor)
 
-    assert_includes response.body, "Inherent risk"
+    assert_includes response.body, "computed from inventory"
     assert_not_includes response.body, "Start assessment"
   end
 

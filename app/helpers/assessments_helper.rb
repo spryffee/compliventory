@@ -29,11 +29,15 @@ module AssessmentsHelper
   end
 
   # One line of an inherent-risk factor breakdown, e.g.
-  # "high — System data classification: confidential".
+  # "high — System data classification: confidential". The level pill sits in a
+  # fixed-width column so the labels line up down the list.
   def factor_line(factor)
     label = FACTOR_LABELS.fetch(factor["factor"], factor["factor"].humanize)
     detail = factor["value"] == "present" ? label : "#{label}: #{factor['value'].humanize}"
-    safe_join([ risk_pill(factor["level"]), tag.span(detail, class: "text-sm text-gray-700") ], " ")
+    safe_join([
+      tag.span(risk_pill(factor["level"]), class: "inline-flex w-20 shrink-0"),
+      tag.span(detail, class: "text-sm text-gray-700")
+    ])
   end
 
   # A next-review date, flagged red once it's due (today or past).

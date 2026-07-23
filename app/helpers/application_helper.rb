@@ -18,15 +18,26 @@ module ApplicationHelper
     end
   end
 
+  # Semantic dot colour per risk level, shared by the pill and the indicator.
+  RISK_DOT = { "low" => "bg-emerald-500", "medium" => "bg-amber-500",
+               "high" => "bg-orange-500", "critical" => "bg-red-500" }.freeze
+
   # A risk-level dot-chip (inherent or residual), matching status_pill's calm
   # monochrome style. Blank level → "Unscored".
   def risk_pill(level)
     return tag.span("Unscored", class: "pill bg-gray-100 text-gray-500") if level.blank?
 
-    dot = { "low" => "bg-emerald-500", "medium" => "bg-amber-500",
-            "high" => "bg-orange-500", "critical" => "bg-red-500" }[level] || "bg-gray-400"
     tag.span(class: "pill bg-gray-100 text-gray-700") do
-      safe_join([ tag.span("", class: "w-1.5 h-1.5 rounded-full #{dot}"), level.humanize ])
+      safe_join([ tag.span("", class: "w-1.5 h-1.5 rounded-full #{RISK_DOT.fetch(level, 'bg-gray-400')}"), level.humanize ])
+    end
+  end
+
+  # A larger, chip-free risk readout for stat blocks: coloured dot + level word.
+  def risk_indicator(level)
+    return tag.span("Unscored", class: "text-base font-semibold text-gray-400") if level.blank?
+
+    tag.span(class: "inline-flex items-center gap-2 text-base font-semibold text-gray-900") do
+      safe_join([ tag.span("", class: "w-2.5 h-2.5 rounded-full #{RISK_DOT.fetch(level, 'bg-gray-400')}"), level.humanize ])
     end
   end
 

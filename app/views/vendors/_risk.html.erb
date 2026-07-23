@@ -9,57 +9,66 @@
     <% end %>
   </div>
 
-  <div class="card divide-y divide-gray-100">
-    <div class="px-5 py-3">
-      <div class="flex items-center gap-2">
-        <span class="text-sm text-gray-500 w-32">Inherent risk</span>
-        <%= risk_pill(inherent_risk[:level]) %>
-        <span class="text-xs text-gray-400">computed from inventory</span>
+  <div class="card overflow-hidden">
+    <div class="grid grid-cols-2 divide-x divide-gray-100">
+      <div class="p-4">
+        <div class="section-label text-gray-400 mb-2">Inherent</div>
+        <%= risk_indicator(inherent_risk[:level]) %>
+        <div class="text-xs text-gray-400 mt-1.5">computed from inventory</div>
       </div>
-      <% if inherent_risk[:factors].any? %>
-        <ul class="mt-2 space-y-1 pl-32">
-          <% inherent_risk[:factors].each do |factor| %>
-            <li><%= factor_line(factor) %></li>
-          <% end %>
-        </ul>
-      <% end %>
+      <div class="p-4">
+        <div class="section-label text-gray-400 mb-2">Residual</div>
+        <%= risk_indicator(vendor.risk_tier) %>
+        <div class="text-xs text-gray-400 mt-1.5">
+          <%= vendor.last_assessed_on ? "assessed #{vendor.last_assessed_on.strftime('%b %-d, %Y')}" : "not yet assessed" %>
+        </div>
+      </div>
     </div>
 
-    <div class="px-5 py-3 flex items-center gap-2 flex-wrap">
-      <span class="text-sm text-gray-500 w-32">Residual risk</span>
-      <%= risk_pill(vendor.risk_tier) %>
-      <% if vendor.last_assessed_on %>
-        <span class="text-xs text-gray-500">
-          assessed <%= vendor.last_assessed_on.strftime("%b %-d, %Y") %>
-          <% if vendor.next_review_on %>
-            · next review <%= review_due_tag(vendor.next_review_on) %>
+    <% if vendor.next_review_on %>
+      <div class="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between text-xs">
+        <span class="text-gray-500">Next review</span>
+        <%= review_due_tag(vendor.next_review_on) %>
+      </div>
+    <% end %>
+
+    <% if inherent_risk[:factors].any? %>
+      <div class="px-4 py-3 border-t border-gray-100 bg-gray-50">
+        <div class="text-xs text-gray-500 mb-2">Why inherent risk is <%= inherent_risk[:level].humanize.downcase %></div>
+        <ul class="space-y-1.5">
+          <% inherent_risk[:factors].each do |factor| %>
+            <li class="flex items-center gap-2"><%= factor_line(factor) %></li>
           <% end %>
-        </span>
-      <% else %>
-        <span class="text-xs text-gray-400">not yet assessed</span>
-      <% end %>
-    </div>
+        </ul>
+      </div>
+    <% end %>
   </div>
 
   <% if assessments.any? %>
-    <div class="mt-3">
-      <h3 class="text-xs text-gray-500 mb-1">History</h3>
-      <ul class="space-y-1">
+    <div class="mt-4">
+      <h3 class="section-label text-gray-400 mb-1.5">History</h3>
+      <div class="card divide-y divide-gray-100 overflow-hidden">
         <% assessments.each do |assessment| %>
-          <li class="text-sm flex items-center gap-2">
-            <%= link_to vendor_assessment_path(vendor, assessment), class: "text-pine-700 hover:underline" do %>
-              <%= assessment.completed? ? assessment.completed_at.strftime("%b %-d, %Y") : "In progress" %>
-            <% end %>
-            <span class="text-gray-400">·</span>
-            <% if assessment.completed? %>
-              <span class="text-gray-600"><%= decision_label(assessment.decision) %></span>
-              <%= risk_pill(assessment.residual_risk) %>
-            <% else %>
-              <span class="text-gray-500">started by <%= assessment.assessor.name %></span>
-            <% end %>
-          </li>
+          <%= link_to vendor_assessment_path(vendor, assessment),
+                class: "flex items-center justify-between gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors" do %>
+            <span class="text-gray-700">
+              <% if assessment.completed? %>
+                <%= assessment.completed_at.strftime("%b %-d, %Y") %>
+              <% else %>
+                Started <%= assessment.created_at.strftime("%b %-d, %Y") %>
+              <% end %>
+            </span>
+            <span class="flex items-center gap-2">
+              <% if assessment.completed? %>
+                <span class="text-gray-500 text-xs"><%= decision_label(assessment.decision) %></span>
+                <%= risk_pill(assessment.residual_risk) %>
+              <% else %>
+                <span class="pill bg-amber-50 text-amber-700">In progress</span>
+              <% end %>
+            </span>
+          <% end %>
         <% end %>
-      </ul>
+      </div>
     </div>
   <% end %>
 </div>
