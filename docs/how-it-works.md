@@ -28,7 +28,7 @@ the app — the ones that feed vendor assessment and GDPR RoPA later:
 |---|---|
 | processes personal data | criticality |
 | data location (EU / US / other) | data classification |
-| risk tier *(set by compliance only)* | stores personal data |
+| risk tier *(residual risk — set by completing an assessment)* | stores personal data |
 | | personal data categories |
 
 ## Ownership: one owner, many delegates
@@ -68,10 +68,46 @@ Mechanics worth knowing:
   meantime, the review screen shows **base → current → proposed** — the reviewer decides;
   there is no hard conflict resolution.
 
+## Vendor risk assessments
+
+Compliance runs **risk assessments** on vendors — an internal review record, not a
+questionnaire sent to the vendor. Two risk numbers are kept distinct:
+
+- **Inherent risk** — the risk *before controls*, computed live from the inventory (the
+  vendor's ⚖ fields plus the criticality and data classification of its active systems).
+  Highest factor wins; the vendor page shows the breakdown ("high — because a linked
+  system is confidential"). Nothing to configure.
+- **Residual risk** — the risk *after* your review, decided when an assessment is
+  completed. It becomes the vendor's **risk tier**.
+
+An assessment moves through two states:
+
+1. **In progress** — an evidence checklist (SOC 2 report, ISO 27001 cert, DPA, security
+   page, pentest summary), each item marked *pending / reviewed / not applicable* with a
+   link and notes, plus a free-text findings summary. Mutable working state.
+2. **Completed** — a frozen record carrying the decision (*approved / approved with
+   conditions / rejected*), the residual risk, any conditions, and the next review date.
+   It cannot be edited afterward; cancelling an in-progress one hard-deletes it (snapshot
+   to the audit log).
+
+Completing an assessment stamps a **next review date**, suggested by the residual risk:
+
+| Residual risk | Review cadence |
+|---|---|
+| Critical | 6 months |
+| High | 12 months |
+| Medium | 24 months |
+| Low | 36 months |
+
+Vendors due (or overdue) for review and those never assessed surface in `/compliance` and
+in the vendors table's **review-status** filter; a weekly digest emails the compliance
+team the same list, and the vendor owner is emailed when an assessment completes.
+
 ## Where reviews happen
 
 - **`/inbox`** — owner-lane proposals for assets you own or are delegated on.
-- **`/compliance`** — compliance team only: pending submissions plus ⚖-field proposals.
+- **`/compliance`** — compliance team only: pending submissions, ⚖-field proposals, and
+  the risk-assessment queue (in progress, overdue, never assessed).
 - The **dashboard** surfaces both queues, your assets, and recent activity on them.
 
 Reviewers are notified by email when a proposal is created; the proposer (and owner) are

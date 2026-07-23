@@ -11,6 +11,12 @@ class Demo::SeederTest < ActiveSupport::TestCase
     assert_equal 2, Delegation.count
     assert_equal 1, ChangeProposal.count
     assert_equal %w[admin compliance member], User.active.distinct.pluck(:role).sort
+
+    # Assessments in every state so /compliance and the table filters demo well.
+    assert_equal 1, Assessment.in_progress.count
+    assert_equal 2, Assessment.completed.count
+    assert Vendor.find_by(name: "PeopleFirst HR").next_review_on.past?, "one vendor is overdue"
+    assert Vendor.active.where(last_assessed_on: nil).exists?, "some vendors are never assessed"
   end
 
   test "reset! wipes visitor changes and minted tokens" do
@@ -27,7 +33,7 @@ class Demo::SeederTest < ActiveSupport::TestCase
 
   test "seed! is idempotent" do
     Demo::Seeder.reset!
-    assert_no_difference [ "User.count", "Vendor.count", "System.count", "ChangeProposal.count" ] do
+    assert_no_difference [ "User.count", "Vendor.count", "System.count", "ChangeProposal.count", "Assessment.count" ] do
       Demo::Seeder.seed!
     end
   end

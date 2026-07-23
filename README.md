@@ -7,8 +7,8 @@ inventory with owner/compliance change control and an append-only audit log.
 ![Rails 8.1](https://img.shields.io/badge/Rails-8.1-CC0000.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13%2B-336791.svg)
 
-> **Early stage — inventory MVP.** Vendor assessment and GDPR records of
-> processing (RoPA) are planned on top of this core.
+> **Early stage.** Inventory and vendor risk assessment are feature-complete;
+> GDPR records of processing (RoPA) are planned on top of this core.
 
 ## What it is
 
@@ -17,7 +17,9 @@ third party) and systems (every application, vendor-backed or in-house), each wi
 accountable owner plus delegates. Any employee can submit or propose changes; change
 control routes every edit to the right reviewer — compliance for new entries and
 compliance-gated (⚖) fields, the asset's owner for the rest — and everything lands in
-an audit log. Companion app to
+an audit log. Compliance runs **vendor risk assessments** on top of the inventory:
+inherent risk is computed from the recorded fields, residual risk is the review outcome,
+and next-review dates drive an overdue queue. Companion app to
 [governauthzer](https://github.com/governauthzer/governauthzer): compliventory owns the
 asset catalog, governauthzer owns access decisions.
 

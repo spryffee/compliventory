@@ -33,6 +33,9 @@ because keeping it current is cheap:
 - **Change control** routes every change to the right reviewer: new entries and
   compliance-gated (⚖) fields go to the **compliance team**; regular edits by non-owners
   go to the **asset's owner**; owner/delegate edits apply immediately.
+- **Vendor risk assessments** — compliance reviews a vendor against an evidence checklist;
+  inherent risk is computed from the inventory, residual risk is the review's outcome, and
+  the next review date drives an overdue queue and a weekly digest.
 - **Everything is audited** — who, what, when, the diff, and the justification, in an
   append-only log.
 
@@ -52,8 +55,8 @@ It is the companion product to
 **asset catalog** (what exists, who owns it, how sensitive it is), governauthzer owns
 **access decisions**. Deliberately a separate product, not a module.
 
-> **Early stage.** The inventory MVP is feature-complete; vendor assessment and GDPR
-> RoPA (Art. 30) records are planned on top of it.
+> **Early stage.** The inventory and vendor risk assessment are feature-complete; GDPR
+> RoPA (Art. 30) records are planned on top of them.
 
 ## Start here
 

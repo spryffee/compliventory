@@ -22,6 +22,7 @@ module Demo
     def reset!
       ApplicationRecord.transaction do
         ChangeProposal.delete_all
+        Assessment.delete_all # before users: assessor_id has an FK to users
         Delegation.delete_all
         AuditEvent.delete_all
         ApiToken.delete_all
@@ -138,6 +139,35 @@ module Demo
         p.attribute_changes = { "description" => [ acme.description, "Object storage, CDN and DNS." ] }
         p.justification = "They also host our DNS now."
       end
+
+      seed_assessments! if Assessment.none?
+    end
+
+    # Risk assessments in every lifecycle state, so /compliance and the vendors
+    # table's review-status filter demo well: one up-to-date (completed), one
+    # in progress, one overdue. The rest of the active vendors stay never
+    # assessed. Uses the real services (audit trail included); guarded by
+    # Assessment.none? to stay idempotent across dev re-seeds.
+    def seed_assessments!
+      compliance = User.find_by!(email: "compliance@example.com")
+      Current.correlation_id ||= SecureRandom.uuid
+
+      # Completed and up to date.
+      slacker = Assessments::Starter.call(vendor: Vendor.find_by!(name: "Slacker"), actor: compliance).value
+      Assessments::Updater.call(assessment: slacker, actor: compliance,
+                                evidence_item: { kind: "soc2_report", state: "reviewed", url: "https://trust.slacker.example/soc2", notes: "Type II, no exceptions." })
+      Assessments::Updater.call(assessment: slacker, actor: compliance, summary: "SOC 2 reviewed; no material findings.")
+      Assessments::Completer.call(assessment: slacker, actor: compliance, residual_risk: "medium",
+                                  decision: "approved", next_review_on: Date.current + 2.years)
+
+      # In progress.
+      Assessments::Starter.call(vendor: Vendor.find_by!(name: "HubForge"), actor: compliance)
+
+      # Overdue: completed once, with the next review date already in the past.
+      hr = Assessments::Starter.call(vendor: Vendor.find_by!(name: "PeopleFirst HR"), actor: compliance).value
+      Assessments::Completer.call(assessment: hr, actor: compliance, residual_risk: "high",
+                                  decision: "approved_with_conditions", conditions: "Annual DPA re-review; SSO enforced.",
+                                  next_review_on: Date.current - 1.month)
     end
   end
 end
