@@ -1,0 +1,31 @@
+<%# locals: vendor, assessment, item, editable %>
+<%= turbo_frame_tag dom_id(assessment, "evidence_#{item['kind']}") do %>
+  <div class="px-4 py-3">
+    <% if editable %>
+      <%= form_with url: vendor_assessment_path(vendor, assessment), method: :patch,
+            class: "flex flex-wrap items-center gap-2" do %>
+        <%= hidden_field_tag "evidence_item[kind]", item["kind"] %>
+        <span class="text-sm font-medium text-gray-900 w-48"><%= evidence_kind_label(item["kind"]) %></span>
+        <%= select_tag "evidence_item[state]",
+              options_for_select(Assessment::EVIDENCE_STATES.map { |s| [ s.humanize, s ] }, item["state"]),
+              class: "input py-1.5 text-sm w-36" %>
+        <%= text_field_tag "evidence_item[url]", item["url"], placeholder: "Link to document",
+              class: "input py-1.5 text-sm flex-1 min-w-40" %>
+        <%= text_field_tag "evidence_item[notes]", item["notes"], placeholder: "Notes",
+              class: "input py-1.5 text-sm flex-1 min-w-32" %>
+        <%= submit_tag "Save", class: "btn btn-secondary btn-sm" %>
+      <% end %>
+    <% else %>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm font-medium text-gray-900 w-48"><%= evidence_kind_label(item["kind"]) %></span>
+        <%= evidence_state_pill(item["state"]) %>
+        <% if item["url"].present? %>
+          <%= link_to "Document", item["url"], class: "text-pine-700 hover:underline text-sm", target: "_blank", rel: "noopener" %>
+        <% end %>
+        <% if item["notes"].present? %>
+          <span class="text-sm text-gray-600"><%= item["notes"] %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,65 @@
+<%# locals: vendor, inherent_risk, assessments, in_progress_assessment, assessment_policy %>
+<div>
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="section-label">Risk</h2>
+    <% if in_progress_assessment %>
+      <%= link_to "Continue assessment", vendor_assessment_path(vendor, in_progress_assessment), class: "btn btn-primary btn-sm" %>
+    <% elsif assessment_policy.may_assess? && !vendor.pending_approval? %>
+      <%= button_to "Start assessment", vendor_assessments_path(vendor), class: "btn btn-primary btn-sm" %>
+    <% end %>
+  </div>
+
+  <div class="card divide-y divide-gray-100">
+    <div class="px-5 py-3">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500 w-32">Inherent risk</span>
+        <%= risk_pill(inherent_risk[:level]) %>
+        <span class="text-xs text-gray-400">computed from inventory</span>
+      </div>
+      <% if inherent_risk[:factors].any? %>
+        <ul class="mt-2 space-y-1 pl-32">
+          <% inherent_risk[:factors].each do |factor| %>
+            <li><%= factor_line(factor) %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+    <div class="px-5 py-3 flex items-center gap-2 flex-wrap">
+      <span class="text-sm text-gray-500 w-32">Residual risk</span>
+      <%= risk_pill(vendor.risk_tier) %>
+      <% if vendor.last_assessed_on %>
+        <span class="text-xs text-gray-500">
+          assessed <%= vendor.last_assessed_on.strftime("%b %-d, %Y") %>
+          <% if vendor.next_review_on %>
+            · next review <%= review_due_tag(vendor.next_review_on) %>
+          <% end %>
+        </span>
+      <% else %>
+        <span class="text-xs text-gray-400">not yet assessed</span>
+      <% end %>
+    </div>
+  </div>
+
+  <% if assessments.any? %>
+    <div class="mt-3">
+      <h3 class="text-xs text-gray-500 mb-1">History</h3>
+      <ul class="space-y-1">
+        <% assessments.each do |assessment| %>
+          <li class="text-sm flex items-center gap-2">
+            <%= link_to vendor_assessment_path(vendor, assessment), class: "text-pine-700 hover:underline" do %>
+              <%= assessment.completed? ? assessment.completed_at.strftime("%b %-d, %Y") : "In progress" %>
+            <% end %>
+            <span class="text-gray-400">·</span>
+            <% if assessment.completed? %>
+              <span class="text-gray-600"><%= decision_label(assessment.decision) %></span>
+              <%= risk_pill(assessment.residual_risk) %>
+            <% else %>
+              <span class="text-gray-500">started by <%= assessment.assessor.name %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>

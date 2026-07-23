@@ -16,6 +16,9 @@ Rails.application.routes.draw do
       post :reject
     end
     resources :delegations, only: %i[create destroy], defaults: { asset_type: "Vendor" }
+    resources :assessments, only: %i[show create update destroy] do
+      member { patch :complete }
+    end
   end
   resources :systems, except: :destroy do
     member do

@@ -44,6 +44,10 @@
         </dl>
       </div>
 
+      <%= render "vendors/risk", vendor: @asset, inherent_risk: @inherent_risk,
+            assessments: @assessments, in_progress_assessment: @in_progress_assessment,
+            assessment_policy: @assessment_policy %>
+
       <% if @proposals.any? %>
         <div>
           <h2 class="section-label mb-2">Pending changes</h2>

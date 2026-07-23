@@ -1,0 +1,121 @@
+<% content_for :title, "Risk assessment — #{@vendor.name} — Compliventory" %>
+<% editable = @assessment.in_progress? && policy.may_edit? %>
+
+<%= render "shared/topbar" %>
+
+<div class="max-w-4xl mx-auto">
+  <div class="mb-1">
+    <%= link_to "← #{@vendor.name}", @vendor, class: "text-sm text-pine-700 hover:underline" %>
+  </div>
+  <div class="flex items-center gap-3 mb-6">
+    <h1 class="page-title">Risk assessment</h1>
+    <% if @assessment.completed? %>
+      <span class="pill bg-gray-100 text-gray-700">Completed</span>
+    <% else %>
+      <span class="pill bg-amber-50 text-amber-700">In progress</span>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <%# Inherent risk snapshot (frozen at start) %>
+    <div class="card px-5 py-4">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-sm text-gray-500 w-40">Inherent risk (at start)</span>
+        <%= risk_pill(@assessment.inherent_risk) %>
+      </div>
+      <% if @assessment.inherent_risk_factors.any? %>
+        <ul class="mt-2 space-y-1 sm:pl-40">
+          <% @assessment.inherent_risk_factors.each do |factor| %>
+            <li><%= factor_line(factor) %></li>
+          <% end %>
+        </ul>
+      <% end %>
+      <p class="text-xs text-gray-400 mt-2">
+        Started by <%= @assessment.assessor.name %> · <%= @assessment.created_at.strftime("%b %-d, %Y") %>
+      </p>
+    </div>
+
+    <%# Evidence checklist %>
+    <div>
+      <h2 class="section-label mb-2">Evidence reviewed</h2>
+      <div class="card divide-y divide-gray-100">
+        <% @assessment.evidence.each do |item| %>
+          <%= render "assessments/evidence_row", vendor: @vendor, assessment: @assessment, item: item, editable: editable %>
+        <% end %>
+      </div>
+      <% if editable %>
+        <p class="text-xs text-gray-400 mt-1">Leaving items pending is itself a finding — completion doesn't require them all resolved.</p>
+      <% end %>
+    </div>
+
+    <%# Findings / summary %>
+    <div>
+      <h2 class="section-label mb-2">Findings</h2>
+      <% if editable %>
+        <%= form_with url: vendor_assessment_path(@vendor, @assessment), method: :patch do %>
+          <%= text_area_tag :summary, @assessment.summary, rows: 4, class: "input",
+                placeholder: "What did the review find? Notable gaps, mitigations, context…" %>
+          <%= submit_tag "Save findings", class: "btn btn-secondary btn-sm mt-2" %>
+        <% end %>
+      <% else %>
+        <div class="card px-5 py-4 text-sm text-gray-800 whitespace-pre-wrap"><%= @assessment.summary.presence || "—" %></div>
+      <% end %>
+    </div>
+
+    <% if @assessment.completed? %>
+      <%# Outcome (frozen) %>
+      <div>
+        <h2 class="section-label mb-2">Outcome</h2>
+        <dl class="card divide-y divide-gray-100">
+          <%= detail_row("Decision", decision_label(@assessment.decision)) %>
+          <%= detail_row("Residual risk") { risk_pill(@assessment.residual_risk) } %>
+          <% if @assessment.conditions.present? %>
+            <%= detail_row("Conditions", @assessment.conditions) %>
+          <% end %>
+          <%= detail_row("Next review") { review_due_tag(@assessment.next_review_on) } %>
+          <%= detail_row("Completed", @assessment.completed_at.strftime("%b %-d, %Y %H:%M")) %>
+        </dl>
+      </div>
+    <% elsif policy.may_complete? %>
+      <%# Completion form %>
+      <div>
+        <h2 class="section-label mb-2">Complete assessment</h2>
+        <div class="card p-5">
+          <%= form_with url: complete_vendor_assessment_path(@vendor, @assessment), method: :patch, class: "space-y-4" do %>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="field-label">Residual risk</label>
+                <%= select_tag :residual_risk,
+                      options_for_select(Assessment::RISK_LEVELS.map { |l| [ l.humanize, l ] }, @assessment.inherent_risk),
+                      include_blank: "Select…", class: "input" %>
+              </div>
+              <div>
+                <label class="field-label">Decision</label>
+                <%= select_tag :decision,
+                      options_for_select(Assessment::DECISIONS.map { |d| [ decision_label(d), d ] }),
+                      include_blank: "Select…", class: "input" %>
+              </div>
+              <div>
+                <label class="field-label">Next review</label>
+                <%= date_field_tag :next_review_on, Assessment.suggested_next_review_on(@assessment.inherent_risk), class: "input" %>
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Conditions</label>
+              <%= text_area_tag :conditions, nil, rows: 2, class: "input", placeholder: "Required when approving with conditions" %>
+            </div>
+            <%= submit_tag "Complete assessment", class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @assessment.in_progress? && policy.may_cancel? %>
+      <div class="pt-2">
+        <%= button_to "Cancel assessment", vendor_assessment_path(@vendor, @assessment), method: :delete,
+              class: "btn-quiet text-sm text-red-600",
+              form: { data: { turbo_confirm: "Cancel this assessment? It will be removed (a snapshot stays in the audit log)." } } %>
+      </div>
+    <% end %>
+  </div>
+</div>

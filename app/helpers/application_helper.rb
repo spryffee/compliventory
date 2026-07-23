@@ -18,6 +18,18 @@ module ApplicationHelper
     end
   end
 
+  # A risk-level dot-chip (inherent or residual), matching status_pill's calm
+  # monochrome style. Blank level → "Unscored".
+  def risk_pill(level)
+    return tag.span("Unscored", class: "pill bg-gray-100 text-gray-500") if level.blank?
+
+    dot = { "low" => "bg-emerald-500", "medium" => "bg-amber-500",
+            "high" => "bg-orange-500", "critical" => "bg-red-500" }[level] || "bg-gray-400"
+    tag.span(class: "pill bg-gray-100 text-gray-700") do
+      safe_join([ tag.span("", class: "w-1.5 h-1.5 rounded-full #{dot}"), level.humanize ])
+    end
+  end
+
   # Enum-ish string / boolean / array values for read surfaces; blank → em dash.
   def display_value(value)
     case value

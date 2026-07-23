@@ -39,6 +39,12 @@ class Assessment < ApplicationRecord
     EVIDENCE_KINDS.map { |kind| { "kind" => kind, "state" => "pending", "url" => nil, "notes" => nil } }
   end
 
+  # Suggested next-review date for a residual level; used to pre-fill the
+  # completion form. Unknown/blank level falls back to the medium cadence.
+  def self.suggested_next_review_on(level, from: Date.current)
+    from >> (REVIEW_MONTHS[level] || REVIEW_MONTHS.fetch("medium"))
+  end
+
   def in_progress?
     status == "in_progress"
   end
