@@ -23,6 +23,10 @@ class Assessment < ApplicationRecord
   validates :residual_risk, inclusion: { in: RISK_LEVELS }, allow_nil: true
   validates :decision, inclusion: { in: DECISIONS }, allow_nil: true
   validates :conditions, presence: true, if: -> { decision == "approved_with_conditions" }
+  # A completed record is the compliance deliverable: it must carry an outcome.
+  with_options if: :completed? do
+    validates :residual_risk, :decision, :next_review_on, presence: true
+  end
   validate :completed_records_are_immutable, on: :update
 
   scope :in_progress, -> { where(status: "in_progress") }

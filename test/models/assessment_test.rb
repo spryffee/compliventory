@@ -32,6 +32,15 @@ class AssessmentTest < ActiveSupport::TestCase
     assert build(decision: "approved", conditions: nil).valid?
   end
 
+  test "a completed record must carry residual risk, decision and next review date" do
+    assessment = build.tap(&:save!)
+    assessment.status = "completed"
+    assert_not assessment.valid?
+    assert_includes assessment.errors.attribute_names, :residual_risk
+    assert_includes assessment.errors.attribute_names, :decision
+    assert_includes assessment.errors.attribute_names, :next_review_on
+  end
+
   test "the completion transition is allowed but later edits to a completed record are rejected" do
     assessment = build.tap(&:save!)
 
