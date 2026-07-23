@@ -16,6 +16,7 @@ module Asset
     validates :status, inclusion: { in: ->(record) { record.class::STATUSES } }
 
     scope :pending_approval, -> { where(status: "pending_approval") }
+    scope :active, -> { where(status: "active") }
   end
 
   def pending_approval?

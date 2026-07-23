@@ -90,8 +90,19 @@ class AssetTable
   def apply_filters(scope)
     filters.reduce(scope) do |current, filter|
       value = filter_value(filter.key)
-      value ? current.where(filter.key => value) : current
+      next current unless value
+
+      if asset_class.column_names.include?(filter.key.to_s)
+        current.where(filter.key => value)
+      else
+        apply_custom_filter(current, filter.key, value)
+      end
     end
+  end
+
+  # Computed (non-column) filters — subclasses override; base is a no-op.
+  def apply_custom_filter(scope, _key, _value)
+    scope
   end
 
   def apply_sort(scope)

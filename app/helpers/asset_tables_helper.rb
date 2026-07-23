@@ -12,6 +12,8 @@ module AssetTablesHelper
     when "owner" then asset.owner.name
     when "vendor" then asset.vendor ? link_to(asset.vendor.name, asset.vendor, class: "hover:text-pine-700") : "In-house"
     when "updated_at" then asset.updated_at.strftime("%b %-d, %Y")
+    when "last_assessed_on" then asset.last_assessed_on&.strftime("%b %-d, %Y") || "—"
+    when "next_review_on" then review_due_tag(asset.next_review_on)
     when *VERBATIM_KEYS then asset.public_send(key).presence || "—"
     else display_value(asset.public_send(key))
     end

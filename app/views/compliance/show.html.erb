@@ -37,11 +37,48 @@
 
   <h2 class="section-label mb-2">Field changes ⚖</h2>
   <% if @proposals.empty? %>
-    <div class="card p-5 text-sm text-gray-500">No pending field changes.</div>
+    <div class="card p-5 text-sm text-gray-500 mb-8">No pending field changes.</div>
   <% else %>
-    <div class="space-y-4">
+    <div class="space-y-4 mb-8">
       <% @proposals.each do |proposal| %>
         <%= render "change_proposals/proposal", proposal: proposal, show_asset: true %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h2 class="section-label mb-2">Risk assessments</h2>
+  <% if @in_progress_assessments.empty? && @overdue_vendors.empty? && @never_assessed_vendors.empty? %>
+    <div class="card p-5 text-sm text-gray-500">Every active vendor is up to date. Nothing to assess.</div>
+  <% else %>
+    <div class="card divide-y divide-gray-100">
+      <% @in_progress_assessments.each do |assessment| %>
+        <%= link_to vendor_assessment_path(assessment.asset, assessment),
+              class: "flex items-center justify-between gap-2 px-5 py-3 text-sm hover:bg-gray-50 transition-colors" do %>
+          <span>
+            <span class="font-medium text-gray-900"><%= assessment.asset.name %></span>
+            <span class="text-gray-500">· started by <%= assessment.assessor.name %></span>
+          </span>
+          <span class="pill bg-amber-50 text-amber-700">In progress</span>
+        <% end %>
+      <% end %>
+
+      <% @overdue_vendors.each do |vendor| %>
+        <%= link_to vendor_path(vendor),
+              class: "flex items-center justify-between gap-2 px-5 py-3 text-sm hover:bg-gray-50 transition-colors" do %>
+          <span>
+            <span class="font-medium text-gray-900"><%= vendor.name %></span>
+            <span class="text-gray-500">· review due <%= review_due_tag(vendor.next_review_on) %></span>
+          </span>
+          <%= risk_pill(vendor.risk_tier) %>
+        <% end %>
+      <% end %>
+
+      <% @never_assessed_vendors.each do |vendor| %>
+        <%= link_to vendor_path(vendor),
+              class: "flex items-center justify-between gap-2 px-5 py-3 text-sm hover:bg-gray-50 transition-colors" do %>
+          <span class="font-medium text-gray-900"><%= vendor.name %></span>
+          <span class="pill bg-gray-100 text-gray-500">Never assessed</span>
+        <% end %>
       <% end %>
     </div>
   <% end %>
