@@ -20,6 +20,7 @@ class Vendor < ApplicationRecord
   ].freeze
 
   has_many :systems
+  has_many :assessments, as: :asset, dependent: :destroy
 
   validates :category, inclusion: { in: CATEGORIES }, allow_nil: true
   validates :data_location, inclusion: { in: DATA_LOCATIONS }, allow_nil: true

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_100006) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_23_100001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_100006) do
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
+  end
+
+  create_table "assessments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "assessor_id", null: false
+    t.uuid "asset_id", null: false
+    t.string "asset_type", null: false
+    t.datetime "completed_at"
+    t.text "conditions"
+    t.datetime "created_at", null: false
+    t.string "decision"
+    t.jsonb "evidence", default: [], null: false
+    t.string "inherent_risk"
+    t.jsonb "inherent_risk_factors", default: [], null: false
+    t.date "next_review_on"
+    t.string "residual_risk"
+    t.string "status", default: "in_progress", null: false
+    t.text "summary"
+    t.datetime "updated_at", null: false
+    t.index ["assessor_id"], name: "index_assessments_on_assessor_id"
+    t.index ["asset_type", "asset_id"], name: "index_assessments_on_asset"
+    t.index ["asset_type", "asset_id"], name: "index_assessments_one_in_progress_per_asset", unique: true, where: "((status)::text = 'in_progress'::text)"
   end
 
   create_table "audit_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -112,7 +133,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_100006) do
     t.datetime "created_at", null: false
     t.string "data_location"
     t.text "description"
+    t.date "last_assessed_on"
     t.string "name", null: false
+    t.date "next_review_on"
     t.text "notes"
     t.uuid "owner_id", null: false
     t.boolean "processes_personal_data"
@@ -124,6 +147,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_100006) do
     t.index ["owner_id"], name: "index_vendors_on_owner_id"
   end
 
+  add_foreign_key "assessments", "users", column: "assessor_id"
   add_foreign_key "audit_events", "users", column: "actor_id"
   add_foreign_key "change_proposals", "users", column: "proposer_id"
   add_foreign_key "delegations", "users"
