@@ -36,13 +36,6 @@ bin/rails db:seed    # demo users, vendors, systems, proposals and assessments
 
 The app is at **<http://localhost:3000>**.
 
-The demo set is nine vendors — enough to follow the walkthrough below, too few to see the
-tables paginate or filter. Set `DEMO_VOLUME` to generate more:
-
-```sh
-DEMO_VOLUME=400 bin/rails db:seed    # ≈400 vendors, 900 systems, 2000 audit events
-```
-
 ## 2. Sign in
 
 Open **<http://localhost:3000/dev/sign-in>** and pick a user — these routes do not exist in
