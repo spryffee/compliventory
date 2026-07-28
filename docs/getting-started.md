@@ -14,9 +14,8 @@ Run it locally and click through the whole submit → review → approve loop in
 
 ---
 
-This is the fastest way to *see how it works* (see [How it works](how-it-works.md) for the
-concepts). It uses a development-only one-click sign-in and demo data, so you don't need
-to wire up OIDC or user sync yet. For a real install, see [Deployment](deployment.md).
+Uses a development-only sign-in and demo data, so there is no OIDC or user sync to wire up
+first. For a real install see [Deployment](deployment.md).
 
 ## Prerequisites
 
@@ -31,17 +30,23 @@ to wire up OIDC or user sync yet. For a real install, see [Deployment](deploymen
 ## 1. Run it
 
 ```sh
-bin/setup                 # bundle + db:prepare, then starts bin/dev
-bin/rails db:seed         # demo users, vendors, systems, a pending proposal, and
-                          # risk assessments in every state (completed / in progress / overdue)
+bin/setup            # bundle + db:prepare, then starts bin/dev
+bin/rails db:seed    # demo users, vendors, systems, proposals and assessments
 ```
 
-The app is now at **<http://localhost:3000>**.
+The app is at **<http://localhost:3000>**.
+
+The demo set is nine vendors — enough to follow the walkthrough below, too few to see the
+tables paginate or filter. Set `DEMO_VOLUME` to generate more:
+
+```sh
+DEMO_VOLUME=400 bin/rails db:seed    # ≈400 vendors, 900 systems, 2000 audit events
+```
 
 ## 2. Sign in
 
-Open **<http://localhost:3000/dev/sign-in>** — a development-only page listing the demo
-users for one-click sign-in (these routes don't exist in production):
+Open **<http://localhost:3000/dev/sign-in>** and pick a user — these routes do not exist in
+production:
 
 | User | Why sign in as them |
 |---|---|
@@ -54,44 +59,20 @@ users for one-click sign-in (these routes don't exist in production):
 ## 3. Click through the loop
 
 1. **As `employee`** — *Vendors → New vendor*, submit one. It lands with status
-   `pending approval`. Then open an asset you don't own (say *Acme Cloud*), hit *Edit*,
+   `pending approval`. Then open an asset you don't own (say *Acme Cloud*), hit *Edit* and
    change the description — on save it becomes a proposal for the owner.
-2. **As `compliance`** — the dashboard shows the queue; open */compliance*, approve your
-   new vendor (it turns `active`) or reject it (hard delete, snapshot in the audit log).
-3. **As `owner`** — the dashboard shows a proposal waiting; open */inbox*, approve or
-   reject the description change, optionally with a comment.
-4. **Anywhere** — open an asset's detail page and scroll to **Activity**: every step you
-   just did is there, with diffs and actors.
-5. **As `compliance`, run an assessment** — open a vendor, hit *Start assessment* in the
-   **Risk** panel. Mark a couple of evidence items, write a summary, then complete it with
-   a residual risk and a decision. The vendor's risk tier and review dates update, and the
-   outcome lands in the audit log.
+2. **As `compliance`** — open */compliance* and approve your new vendor (it turns
+   `active`) or reject it (hard delete, snapshot in the audit log).
+3. **As `owner`** — open */inbox* and approve or reject the description change, optionally
+   with a comment.
+4. **As `compliance`, assess a vendor** — *Start assessment* in the **Risk** panel of any
+   vendor. Mark evidence, then complete it with a residual risk and a decision: the
+   vendor's risk tier and review dates update.
+5. **Anywhere** — open an asset and scroll to **Activity**: every step above is there, with
+   diffs and actors.
 
-Emails sent along the way (new proposal, decisions, new submission) open in the browser
-at **<http://localhost:3000/letter_opener>**.
+*Vendors* and *Systems* are searchable, filterable per column, sortable on every column,
+and have a **Columns** picker saved to your user.
 
-## 4. Poke at the tables
-
-*Vendors* and *Systems* are server-rendered dynamic tables: search, per-column filters,
-every column sortable, and a **Columns** picker whose selection is saved to your user
-(it follows you across devices).
-
-Nine vendors is too few to feel any of that, so the seed takes a volume dial —
-`DEMO_VOLUME` is the number of generated vendors, with systems, users, proposals,
-assessments and audit events derived from it:
-
-```sh
-DEMO_VOLUME=400 bin/rails db:seed    # ≈400 vendors, 900 systems, 2000 audit events
-```
-
-The generated records land **on top of** the curated ones (Acme Cloud and friends are
-still there, so step 3 still works), and cover the states that are easy to miss when
-testing by hand: unscored risk tiers, unknown ⚖ booleans, in-house systems with no
-vendor, and all four review-status buckets. It is deterministic — the same `DEMO_VOLUME`
-gives the same sandbox every time. Re-run to top up; `bin/rails runner
-'Demo::Seeder.reset!'` to start clean.
-
-## Next steps
-
-- Operating it for real: [Admin guide](admin-guide.md), [Deployment](deployment.md).
-- Feeding it users from your directory: [Users sync API](api.md).
+Outgoing mail is not sent in development — it opens in the browser at
+**<http://localhost:3000/letter_opener>**.

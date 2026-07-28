@@ -15,18 +15,10 @@ The company's vendors and systems, accounted for.
 
 ---
 
-## The problem
+## What it does
 
-Every company runs on third parties and internal systems — Slack, AWS, the HR portal, that
-CRM nobody remembers buying. Someone has to know **what is in use, who is accountable for
-it, where the data lives, and how risky it is** — for security reviews, for GDPR records
-of processing, for the auditor who asks "show me your vendor register". Spreadsheets go
-stale the week they're written.
-
-## What compliventory does
-
-compliventory is a self-hosted **inventory of vendors and systems** that stays current
-because keeping it current is cheap:
+compliventory is a self-hosted **inventory of vendors and systems** — what the company
+uses, who is accountable for it, where the data lives, and how risky it is:
 
 - **Any employee** can submit a new vendor/system or propose an edit — no gatekeeping at
   the door.
@@ -60,9 +52,7 @@ It is the companion product to
 
 ## Start here
 
-- **New here?** Read **[How it works](how-it-works.md)**, then
-  **[Getting started](getting-started.md)** to click through the whole
-  submit → review → approve loop locally in a few minutes.
-- **Operating it?** The **[Admin guide](admin-guide.md)** covers roles, user sync, and
-  API tokens.
-- **Integrating?** The **[Users sync API](api.md)** and **[Deployment](deployment.md)**.
+- **[How it works](how-it-works.md)** — the objects, the review lanes, the audit log.
+- **[Getting started](getting-started.md)** — run it locally in a few minutes.
+- **[Admin guide](admin-guide.md)** · **[Users sync API](api.md)** ·
+  **[Deployment](deployment.md)** — operating and integrating it.

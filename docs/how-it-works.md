@@ -32,9 +32,7 @@ the app — the ones that feed vendor assessment and GDPR RoPA later:
 | | personal data categories |
 
 The ⚖ booleans are **three-state**: *Unknown* (nothing recorded yet), *Yes*, and *No*.
-"No" is a finding in its own right, not an empty field — recording "this vendor does not
-process personal data" is a reviewable change like any other, and it is what stops the
-same question being asked again next quarter.
+"No" is a finding, not an empty field — recording it is a reviewable change like any other.
 
 ## Ownership: one owner, many delegates
 
@@ -112,10 +110,8 @@ Completing an assessment stamps a **next review date**, suggested by the residua
 
 Vendors due (or overdue) for review and those never assessed surface in `/compliance` and
 in the vendors table's **review-status** filter. A weekly digest emails the compliance team
-the same two lists, **minus any vendor whose assessment is already in progress** — the
-digest exists to prompt work that hasn't started, so it stays quiet about work underway.
-(`/compliance` still lists those vendors, because it shows the in-progress queue right
-beside them.) The vendor owner is emailed when an assessment completes.
+the same two lists, minus any vendor whose assessment is already in progress. The vendor
+owner is emailed when an assessment completes.
 
 ## Where reviews happen
 
