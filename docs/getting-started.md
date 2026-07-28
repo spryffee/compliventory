@@ -32,7 +32,8 @@ to wire up OIDC or user sync yet. For a real install, see [Deployment](deploymen
 
 ```sh
 bin/setup                 # bundle + db:prepare, then starts bin/dev
-bin/rails db:seed         # demo users, vendors, systems, and a pending proposal
+bin/rails db:seed         # demo users, vendors, systems, a pending proposal, and
+                          # risk assessments in every state (completed / in progress / overdue)
 ```
 
 The app is now at **<http://localhost:3000>**.
@@ -59,8 +60,12 @@ users for one-click sign-in (these routes don't exist in production):
    new vendor (it turns `active`) or reject it (hard delete, snapshot in the audit log).
 3. **As `owner`** — the dashboard shows a proposal waiting; open */inbox*, approve or
    reject the description change, optionally with a comment.
-4. **Anywhere** — open an asset's detail page and check the **audit trail** tab: every
-   step you just did is there, with diffs and actors.
+4. **Anywhere** — open an asset's detail page and scroll to **Activity**: every step you
+   just did is there, with diffs and actors.
+5. **As `compliance`, run an assessment** — open a vendor, hit *Start assessment* in the
+   **Risk** panel. Mark a couple of evidence items, write a summary, then complete it with
+   a residual risk and a decision. The vendor's risk tier and review dates update, and the
+   outcome lands in the audit log.
 
 Emails sent along the way (new proposal, decisions, new submission) open in the browser
 at **<http://localhost:3000/letter_opener>**.

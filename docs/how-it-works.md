@@ -31,6 +31,11 @@ the app — the ones that feed vendor assessment and GDPR RoPA later:
 | risk tier *(residual risk — set by completing an assessment)* | stores personal data |
 | | personal data categories |
 
+The ⚖ booleans are **three-state**: *Unknown* (nothing recorded yet), *Yes*, and *No*.
+"No" is a finding in its own right, not an empty field — recording "this vendor does not
+process personal data" is a reviewable change like any other, and it is what stops the
+same question being asked again next quarter.
+
 ## Ownership: one owner, many delegates
 
 Accountability and operation are split (RACI-style):
@@ -58,7 +63,9 @@ Mechanics worth knowing:
 
 - **New submissions are real records**, not proposals — they exist immediately with
   status `pending_approval` and appear in the tables. Approval flips them to `active`;
-  rejection hard-deletes the record and leaves a full snapshot in the audit log.
+  rejection hard-deletes the record and leaves a full snapshot in the audit log. A vendor
+  that systems already point at cannot be rejected until those systems are reassigned —
+  compliventory refuses rather than silently re-classifying them as in-house.
 - **Compliance edits apply immediately everywhere** — the approver's own edit is
   self-approved by definition.
 - A single edit form serves everyone. On save, the app splits your changes by lane: what
@@ -73,18 +80,22 @@ Mechanics worth knowing:
 Compliance runs **risk assessments** on vendors — an internal review record, not a
 questionnaire sent to the vendor. Two risk numbers are kept distinct:
 
-- **Inherent risk** — the risk *before controls*, computed live from the inventory (the
-  vendor's ⚖ fields plus the criticality and data classification of its active systems).
-  Highest factor wins; the vendor page shows the breakdown ("high — because a linked
-  system is confidential"). Nothing to configure.
+- **Inherent risk** — the risk *before controls*, computed live from the inventory: the
+  vendor's own record (personal data, data location, whether it is infrastructure) plus
+  the criticality, data classification and personal-data categories of its **active and
+  deprecated** systems (retired and unapproved ones hold no live risk). Highest factor
+  wins; the vendor page shows the breakdown ("high — because a linked system is
+  confidential"). A vendor with no risk signals on record reads **unscored**. Nothing to
+  configure.
 - **Residual risk** — the risk *after* your review, decided when an assessment is
   completed. It becomes the vendor's **risk tier**.
 
 An assessment moves through two states:
 
 1. **In progress** — an evidence checklist (SOC 2 report, ISO 27001 cert, DPA, security
-   page, pentest summary), each item marked *pending / reviewed / not applicable* with a
-   link and notes, plus a free-text findings summary. Mutable working state.
+   page, pentest summary, plus a free-form *other*), each item marked *pending / reviewed
+   / not applicable* with a link and notes, plus a free-text findings summary. Mutable
+   working state.
 2. **Completed** — a frozen record carrying the decision (*approved / approved with
    conditions / rejected*), the residual risk, any conditions, and the next review date.
    It cannot be edited afterward; cancelling an in-progress one hard-deletes it (snapshot
@@ -100,8 +111,11 @@ Completing an assessment stamps a **next review date**, suggested by the residua
 | Low | 36 months |
 
 Vendors due (or overdue) for review and those never assessed surface in `/compliance` and
-in the vendors table's **review-status** filter; a weekly digest emails the compliance
-team the same list, and the vendor owner is emailed when an assessment completes.
+in the vendors table's **review-status** filter. A weekly digest emails the compliance team
+the same two lists, **minus any vendor whose assessment is already in progress** — the
+digest exists to prompt work that hasn't started, so it stays quiet about work underway.
+(`/compliance` still lists those vendors, because it shows the in-progress queue right
+beside them.) The vendor owner is emailed when an assessment completes.
 
 ## Where reviews happen
 
@@ -116,7 +130,10 @@ notified of decisions.
 ## The audit log
 
 Every write — create, edit, delegation change, decision — is recorded with actor, targets,
-timestamp, field-level diff, justification, and correlation id. Records are **hard-deleted**
+timestamp, field-level diff, justification, and correlation id. Assessment events carry
+their **outcome** rather than a diff (decision, residual risk, next review date): the
+assigned risk tier is the result of a review, not a field someone edited, so a re-review
+that confirms the existing tier is recorded as the finding it is. Records are **hard-deleted**
 on rejection/offboarding cleanup; their history stays in the log (links from old audit
 entries may 404 — that is the deliberate trade-off, history lives in the log, not in
 soft-deleted rows).
