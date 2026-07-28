@@ -32,6 +32,11 @@ env:
   clear:
     SOLID_QUEUE_IN_PUMA: true      # jobs (incl. the nightly reset) run inside Puma
     DEMO_MODE: true                # persona-picker sign-in + nightly data reset
+    # Generated inventory on top of the curated demo records (vendor count; the
+    # rest scales with it). Without it the sandbox is nine vendors, and a visitor
+    # never sees the dynamic tables paginate, filter or sort. Read at seed time,
+    # so the nightly reset rebuilds this size on its own.
+    DEMO_VOLUME: 400
     COMPLIVENTORY_HOST: https://<%= ENV.fetch("DOMAIN") %>
     # Point the app at the Postgres accessory below (Kamal wires it on the
     # private Docker network under the accessory's name: <service>-db).

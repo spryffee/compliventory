@@ -5,6 +5,11 @@
 # `seed!` is idempotent (find_or_create_by). `reset!` wipes the whole domain
 # and rebuilds it, so nightly it undoes any visitor's edits, deletions, minted
 # tokens, or preference changes and returns a pristine sandbox.
+#
+# Set `DEMO_VOLUME` to a vendor count and Demo::VolumeSeeder lays generated
+# inventory on top of the curated records, so the paginated/filtered tables have
+# something to work on. Default 0 — the curated set alone is what the docs walk
+# through and what the tests assert, and generated data is not idempotent.
 module Demo
   module Seeder
     module_function
@@ -141,6 +146,19 @@ module Demo
       end
 
       seed_assessments! if Assessment.none?
+
+      # Generated bulk inventory, on top of everything curated above. No-op at
+      # the default scale of 0, so plain seed! stays idempotent.
+      VolumeSeeder.call(scale: volume_scale)
+    end
+
+    # Vendor count for the generated volume. Read from ENV rather than passed in
+    # so the nightly Demo::ResetJob rebuilds the same sized sandbox without
+    # knowing anything about it.
+    def volume_scale
+      Integer(ENV.fetch("DEMO_VOLUME", 0))
+    rescue ArgumentError
+      0
     end
 
     # Risk assessments in every lifecycle state, so /compliance and the vendors

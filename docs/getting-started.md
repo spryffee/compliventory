@@ -76,6 +76,21 @@ at **<http://localhost:3000/letter_opener>**.
 every column sortable, and a **Columns** picker whose selection is saved to your user
 (it follows you across devices).
 
+Nine vendors is too few to feel any of that, so the seed takes a volume dial —
+`DEMO_VOLUME` is the number of generated vendors, with systems, users, proposals,
+assessments and audit events derived from it:
+
+```sh
+DEMO_VOLUME=400 bin/rails db:seed    # ≈400 vendors, 900 systems, 2000 audit events
+```
+
+The generated records land **on top of** the curated ones (Acme Cloud and friends are
+still there, so step 3 still works), and cover the states that are easy to miss when
+testing by hand: unscored risk tiers, unknown ⚖ booleans, in-house systems with no
+vendor, and all four review-status buckets. It is deterministic — the same `DEMO_VOLUME`
+gives the same sandbox every time. Re-run to top up; `bin/rails runner
+'Demo::Seeder.reset!'` to start clean.
+
 ## Next steps
 
 - Operating it for real: [Admin guide](admin-guide.md), [Deployment](deployment.md).
