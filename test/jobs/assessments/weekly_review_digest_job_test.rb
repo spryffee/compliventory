@@ -20,6 +20,25 @@ module Assessments
       end
     end
 
+    test "a vendor being assessed right now is not counted as overdue" do
+      Vendor.active.update_all(last_assessed_on: Date.current, next_review_on: Date.current + 1.year)
+      stale = Vendor.create!(name: "Stale Co", owner: users(:owner), status: "active",
+                             last_assessed_on: Date.current - 2.years, next_review_on: Date.current - 1.month)
+
+      # Control: overdue with nobody on it — the digest goes out.
+      assert_enqueued_emails 1 do
+        WeeklyReviewDigestJob.perform_now
+      end
+
+      Current.correlation_id = SecureRandom.uuid
+      Starter.call(vendor: stale, actor: users(:compliance))
+      Current.reset
+
+      assert_no_enqueued_emails do
+        WeeklyReviewDigestJob.perform_now
+      end
+    end
+
     test "a vendor being assessed right now is not counted as never assessed" do
       Vendor.active.update_all(last_assessed_on: Date.current, next_review_on: Date.current + 1.year)
       fresh = Vendor.create!(name: "Fresh Co", owner: users(:owner), status: "active")
