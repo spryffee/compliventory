@@ -1,0 +1,54 @@
+# Supported alternative to Kamal, for when Kamal doesn't fit — see
+# docs/deployment.md. Put the values in a `.env` next to this file, then:
+#
+#   docker compose up -d                       install
+#   docker compose pull && docker compose up -d  upgrade
+#
+# Migrations run on boot from the image entrypoint, so an upgrade is those two
+# commands and nothing else. Pin the image tag and bump it deliberately.
+name: compliventory
+
+services:
+  app:
+    image: ghcr.io/spryffee/compliventory:0.1.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Bound to localhost on purpose: terminate TLS in your own proxy in front
+      # of this. Kamal does that part for you; compose does not.
+      - "127.0.0.1:8080:80"
+    environment:
+      # Generate once with `openssl rand -hex 64` and keep it — changing it
+      # signs everyone out. Published images carry no usable Rails credentials,
+      # so this replaces RAILS_MASTER_KEY.
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?generate with openssl rand -hex 64}
+      COMPLIVENTORY_HOST: ${COMPLIVENTORY_HOST:?e.g. https://compliventory.corp.example}
+      COMPLIVENTORY_DATABASE_HOST: db
+      COMPLIVENTORY_DATABASE_USER: compliventory
+      COMPLIVENTORY_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set it in .env}
+      OIDC_ISSUER: ${OIDC_ISSUER:?your IdP issuer URL}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+      SOLID_QUEUE_IN_PUMA: "true"
+      # Optional — SMTP_*, MAIL_FROM, RATE_LIMIT_SAFELIST: see docs/deployment.md.
+      # Without SMTP_ADDRESS the app works and silently drops notification mail.
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: compliventory
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set it in .env}
+      POSTGRES_DB: compliventory_production
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U compliventory" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

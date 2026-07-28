@@ -30,6 +30,9 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
+          <%# What is actually deployed, without shelling into the container. %>
+          <span class="hidden sm:inline text-xs text-gray-400 tabular-nums"
+                title="compliventory version">v<%= Compliventory::VERSION %></span>
           <span class="hidden sm:inline text-sm text-gray-400"><%= current_user.name %></span>
           <%= link_to "App ↗", root_path, class: "hidden sm:inline-block shrink-0 px-3 py-1.5 rounded-md text-sm text-pine-700 font-medium hover:bg-pine-50" %>
           <%# Mobile: hamburger %>

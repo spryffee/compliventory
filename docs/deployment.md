@@ -30,7 +30,8 @@ variables.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `RAILS_MASTER_KEY` | — | **Required.** Standard Rails credentials key (`config/master.key`). |
+| `SECRET_KEY_BASE` | — | **Required.** Generate once with `openssl rand -hex 64` and keep it — changing it signs everyone out. |
+| `RAILS_MASTER_KEY` | — | Only if you build the image from source. Published images carry no usable credentials, so `SECRET_KEY_BASE` replaces it. |
 | `COMPLIVENTORY_HOST` | `http://localhost:3000` | Public base URL — used for the OIDC `redirect_uri` and links in emails. Set to your public URL. |
 | `COMPLIVENTORY_DATABASE_HOST` | `localhost` | PostgreSQL host. |
 | `COMPLIVENTORY_DATABASE_USER` | `compliventory` | DB role the app connects as. |
@@ -52,29 +53,116 @@ variables.
 OIDC configuration is read per request, so changing it needs only a restart, and an
 unconfigured instance fails cleanly at sign-in rather than at boot.
 
-## Container
+## Releases
 
-The provided
-[`Dockerfile`](https://github.com/spryffee/compliventory/blob/main/Dockerfile) is
-production-ready (jemalloc, Thruster in front of Puma, non-root user; migrations run via
-the entrypoint):
+Every release publishes a multi-arch image (amd64 + arm64) to GHCR:
 
-```sh
-docker build -t compliventory .
-docker run -d -p 80:80 \
-  -e RAILS_MASTER_KEY=… \
-  -e COMPLIVENTORY_HOST=https://compliventory.example.com \
-  -e COMPLIVENTORY_DATABASE_HOST=… -e COMPLIVENTORY_DATABASE_PASSWORD=… \
-  -e OIDC_ISSUER=… -e OIDC_CLIENT_ID=… -e OIDC_CLIENT_SECRET=… \
-  compliventory
+```
+ghcr.io/spryffee/compliventory:0.1.0    exactly this release
+ghcr.io/spryffee/compliventory:0.1      follow patches
+ghcr.io/spryffee/compliventory:0        follow minors
+ghcr.io/spryffee/compliventory:latest   follow everything — not for production
 ```
 
-### Kamal
+Pin the exact version in production and move deliberately. The version number is an
+upgrade contract — what each bump obliges you to do, and what changed in a given release,
+is in
+[CHANGELOG.md](https://github.com/spryffee/compliventory/blob/main/CHANGELOG.md).
+The running version is shown in `/admin`, and in the image's
+`org.opencontainers.image.version` label for `docker inspect`.
 
-[`config/deploy.yml`](https://github.com/spryffee/compliventory/blob/main/config/deploy.yml)
-is a standard Kamal 2 setup: point it at your server and registry, put
-`RAILS_MASTER_KEY` in `.kamal/secrets`, add the ENV above, `kamal setup`. TLS comes from
-Kamal's proxy (`proxy: ssl: true` + your hostname) or your own load balancer.
+## Install with Kamal (recommended)
+
+[Kamal 2](https://kamal-deploy.org) gives you Let's Encrypt TLS, health-checked rollouts
+with no downtime, and one-command rollback. It is how the public demo runs.
+
+You do not need this repository — only a `config/deploy.yml` pointing at the published
+image:
+
+```yaml
+service: compliventory
+image: ghcr.io/spryffee/compliventory
+
+servers:
+  web:
+    - 203.0.113.10
+
+proxy:
+  ssl: true
+  host: compliventory.corp.example
+
+registry:
+  server: ghcr.io
+  username: your-github-user
+  password:
+    - KAMAL_REGISTRY_PASSWORD     # a token with read:packages
+
+env:
+  clear:
+    COMPLIVENTORY_HOST: https://compliventory.corp.example
+    COMPLIVENTORY_DATABASE_HOST: compliventory-db
+    COMPLIVENTORY_DATABASE_USER: compliventory
+    SOLID_QUEUE_IN_PUMA: true
+    OIDC_ISSUER: https://idp.corp.example
+    OIDC_CLIENT_ID: compliventory
+  secret:
+    - SECRET_KEY_BASE
+    - COMPLIVENTORY_DATABASE_PASSWORD
+    - OIDC_CLIENT_SECRET
+
+accessories:
+  db:
+    image: postgres:16
+    host: 203.0.113.10
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: compliventory
+        POSTGRES_DB: compliventory_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+```
+
+Put the secrets in `.kamal/secrets`, then:
+
+```sh
+kamal setup -P --version 0.1.0
+```
+
+`-P` (`--skip-push`) is what makes Kamal deploy the released image rather than build one
+from your source, and `--version` picks the tag.
+
+## Install with Docker Compose
+
+Supported for when Kamal doesn't fit. You bring your own TLS-terminating proxy and accept
+a few seconds of downtime per upgrade; in exchange there is one file and no control
+machine. Take
+[`compose.yaml`](https://github.com/spryffee/compliventory/blob/main/compose.yaml),
+put the values in a `.env` beside it, and:
+
+```sh
+docker compose up -d
+```
+
+## Upgrading
+
+Migrations run automatically when the container boots, so an upgrade is a tag change:
+
+```sh
+kamal deploy -P --version 0.2.0        # Kamal
+docker compose pull && docker compose up -d   # Compose (pin the new tag first)
+```
+
+Read the release's **Upgrade notes** first — that is where anything you must do by hand
+is written, and a major version means there is something.
+
+One thing to know before you roll back: **the image goes back, the database does not.**
+`kamal rollback` returns the previous container to a schema that has already been
+migrated. Migrations within a major version are written to tolerate this (a release only
+adds; removals wait for the next one), so stepping back one version is safe. Skipping
+backwards across several is not — restore a database backup instead.
 
 ## Bootstrap the first admin
 

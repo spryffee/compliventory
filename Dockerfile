@@ -60,6 +60,15 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 # Final stage for app image
 FROM base
 
+# Release metadata, stamped by the release workflow. `docker inspect` then
+# answers "what is actually running here" without a shell into the container.
+ARG APP_VERSION="dev"
+LABEL org.opencontainers.image.title="compliventory" \
+      org.opencontainers.image.description="Self-hosted inventory of vendors and systems with change control and an append-only audit log" \
+      org.opencontainers.image.source="https://github.com/spryffee/compliventory" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later" \
+      org.opencontainers.image.version="${APP_VERSION}"
+
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
