@@ -69,4 +69,16 @@ class AuditViewerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Inherent risk"
   end
+
+  test "an assessment target names itself without repeating the vendor" do
+    sign_in_as users(:compliance)
+    post vendor_assessments_path(vendors(:acme))
+    assessment = Assessment.sole
+
+    get audit_events_path(event_type: "assessment.started")
+    assert_response :success
+    assert_includes response.body, "risk assessment"
+    assert_not_includes response.body, "assessment of Acme Cloud"
+    assert_includes response.body, vendor_assessment_path(vendors(:acme), assessment)
+  end
 end

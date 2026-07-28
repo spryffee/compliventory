@@ -37,7 +37,7 @@
             <td><span class="pill bg-gray-100 text-gray-700"><%= event.event_type %></span></td>
             <td class="text-gray-600"><%= event.actor_display || "system" %></td>
             <td class="text-gray-600">
-              <%= safe_join(event.targets.map { |t| audit_target_tag(t) }, ", ") %>
+              <%= safe_join(event.targets.map { |t| audit_target_tag(t, event) }, ", ") %>
             </td>
             <td>
               <% outcome = audit_outcome(event) %>

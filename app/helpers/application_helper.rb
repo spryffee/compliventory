@@ -105,16 +105,25 @@ module ApplicationHelper
     end
   end
 
-  # A target descriptor from audit_events.targets — linked for asset types that
-  # have detail pages. Hard-deleted targets keep their display name; the link
-  # may 404, which is the history-in-audit-log trade-off.
-  def audit_target_tag(target)
+  # A target descriptor from audit_events.targets — linked for the types that
+  # have detail pages. An Assessment is nested under its vendor, so its route
+  # needs the vendor id, which comes from the event's other target (assessment
+  # events always carry both). Hard-deleted targets keep their display name; the
+  # link may 404, which is the history-in-audit-log trade-off.
+  def audit_target_tag(target, event)
     label = target["display"] || target["id"]
     case target["type"]
-    when "Vendor" then link_to label, vendor_path(target["id"]), class: "text-pine-700 hover:underline"
-    when "System" then link_to label, system_path(target["id"]), class: "text-pine-700 hover:underline"
+    when "Vendor" then audit_target_link(label, vendor_path(target["id"]))
+    when "System" then audit_target_link(label, system_path(target["id"]))
+    when "Assessment"
+      vendor_id = event.target_id("Vendor")
+      vendor_id ? audit_target_link(label, vendor_assessment_path(vendor_id, target["id"])) : tag.span(label)
     else tag.span(label)
     end
+  end
+
+  def audit_target_link(label, path)
+    link_to label, path, class: "text-pine-700 hover:underline"
   end
 
   def audit_timestamp(time)

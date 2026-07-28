@@ -53,8 +53,11 @@ class Assessment < ApplicationRecord
     status == "completed"
   end
 
+  # Deliberately does NOT name the vendor: assessment events always carry the
+  # vendor as a co-target, so embedding the name here rendered the audit log's
+  # Targets column as "assessment of Slacker, Slacker".
   def audit_display
-    "assessment of #{asset.name}"
+    "risk assessment"
   end
 
   private

@@ -53,6 +53,30 @@ class ApplicationHelperTest < ActionView::TestCase
                  audit_outcome(event("assessment.cancelled", { "snapshot" => { "id" => "x" } }))
   end
 
+  test "an assessment target links to the assessment under its vendor" do
+    vendor_id, assessment_id = SecureRandom.uuid, SecureRandom.uuid
+    event = AuditEvent.new(event_type: "assessment.completed", targets: [
+      { "type" => "Assessment", "id" => assessment_id, "display" => "risk assessment" },
+      { "type" => "Vendor", "id" => vendor_id, "display" => "Slacker" }
+    ])
+
+    html = audit_target_tag(event.targets.first, event)
+    assert_includes html, "/vendors/#{vendor_id}/assessments/#{assessment_id}"
+    assert_includes html, "risk assessment"
+    # The co-target still names the vendor — that is why the assessment must not.
+    assert_includes audit_target_tag(event.targets.second, event), "/vendors/#{vendor_id}"
+  end
+
+  test "an assessment target with no vendor co-target renders unlinked, not broken" do
+    event = AuditEvent.new(event_type: "assessment.completed", targets: [
+      { "type" => "Assessment", "id" => SecureRandom.uuid, "display" => "risk assessment" }
+    ])
+
+    html = audit_target_tag(event.targets.first, event)
+    assert_not_includes html, "<a"
+    assert_includes html, "risk assessment"
+  end
+
   # Metadata is rendered per event type on purpose — it also holds internals
   # (snapshots, proposal_id, api_token_id) that must never reach the UI.
   test "events carrying a real field diff get no metadata rendering" do
