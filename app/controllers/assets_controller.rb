@@ -106,8 +106,13 @@ class AssetsController < ApplicationController
   end
 
   def decision_failure(result)
-    if result.code == :not_pending
+    case result.code
+    when :not_pending
       redirect_to @asset, alert: "Only pending submissions can be decided."
+    when :has_linked_systems
+      count = result.context[:count]
+      redirect_to @asset, alert: "Can't reject #{@asset.name}: #{count} #{'system'.pluralize(count)} " \
+                                 "#{count == 1 ? 'is' : 'are'} linked to it. Reassign #{count == 1 ? 'it' : 'them'} first."
     else
       render "shared/forbidden", status: :forbidden
     end

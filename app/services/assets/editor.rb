@@ -32,7 +32,7 @@ module Assets
       # tracking flags that as a change (nil → ""), but nothing meaningful moved.
       # Drop such blank↔blank no-ops so they're neither saved nor audited/proposed
       # (restore reverts the in-memory value to the stored one).
-      noop = diff.select { |_, (old, new)| old.blank? && new.blank? }.keys
+      noop = diff.select { |_, (old, new)| empty_value?(old) && empty_value?(new) }.keys
       if noop.any?
         @asset.restore_attributes(noop)
         diff = diff.except(*noop)
@@ -90,6 +90,14 @@ module Assets
     end
 
     private
+
+    # "Nothing was entered" — nil, "" or []. NOT `blank?`: the ⚖ booleans are
+    # three-state (Unknown / Yes / No) and `false.blank?` is true, which would
+    # silently discard "Unknown → No" as if the form had been left empty.
+    # Recording an explicit "No" is a compliance determination in its own right.
+    def empty_value?(value)
+      value != false && value.blank?
+    end
 
     def lane_for(field)
       @asset.class::COMPLIANCE_FIELDS.include?(field.to_sym) ? "compliance" : "owner"

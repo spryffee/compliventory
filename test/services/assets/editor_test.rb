@@ -47,6 +47,45 @@ module Assets
       assert_nil vendors(:acme).reload.notes # "" no-op was not persisted
     end
 
+    # The ⚖ booleans are three-state (Unknown / Yes / No). `false` is an answer,
+    # not an empty form field, so it must survive the blank↔blank no-op filter.
+    test "'Unknown → No' on a ⚖ boolean is a real change, not a blank no-op" do
+      vendor = vendors(:pending_vendor)
+      assert_nil vendor.processes_personal_data
+
+      result = Editor.call(asset: vendor, actor: users(:compliance),
+                           attributes: { processes_personal_data: "false" })
+
+      assert result.success
+      assert_equal({ "processes_personal_data" => [ nil, false ] }, result.value.applied_changes)
+      assert_equal false, vendor.reload.processes_personal_data
+    end
+
+    test "'No → Unknown' clears a ⚖ boolean back to unknown" do
+      vendor = vendors(:pending_vendor)
+      vendor.update!(processes_personal_data: false)
+
+      result = Editor.call(asset: vendor, actor: users(:compliance),
+                           attributes: { processes_personal_data: "" })
+
+      assert result.success
+      assert_equal({ "processes_personal_data" => [ false, nil ] }, result.value.applied_changes)
+      assert_nil vendor.reload.processes_personal_data
+    end
+
+    test "an owner recording 'No' on a ⚖ boolean routes to the compliance lane" do
+      vendor = vendors(:pending_vendor)
+
+      result = Editor.call(asset: vendor, actor: users(:employee),
+                           attributes: { processes_personal_data: "false" })
+
+      assert result.success
+      proposal = result.value.proposals.sole
+      assert_equal "compliance", proposal.lane
+      assert_equal({ "processes_personal_data" => [ nil, false ] }, proposal.attribute_changes)
+      assert_nil vendor.reload.processes_personal_data # proposed only, not applied
+    end
+
     test "a non-owner's real edit alongside blank fields proposes only the real change" do
       result = Editor.call(
         asset: vendors(:acme), actor: users(:employee),

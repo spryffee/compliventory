@@ -12,6 +12,7 @@ module Assets
     def call
       return failure(:not_permitted) unless @actor.compliance?
       return failure(:not_pending) unless @asset.pending_approval?
+      return failure(:has_linked_systems, count: linked_systems) if linked_systems.positive?
 
       snapshot = @asset.attributes
       owner = @asset.owner
@@ -32,6 +33,13 @@ module Assets
     end
 
     private
+
+    # Systems may be submitted against a still-pending vendor, so a rejection can
+    # collide with the FK. Reassigning them is the compliance user's call — this
+    # reports the blocker instead of destroying or rewriting inventory.
+    def linked_systems
+      @linked_systems ||= @asset.is_a?(Vendor) ? @asset.systems.count : 0
+    end
 
     def notify_owner(owner, snapshot)
       return if owner == @actor || !owner.active?

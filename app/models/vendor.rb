@@ -19,7 +19,12 @@ class Vendor < ApplicationRecord
     processes_personal_data data_location risk_tier
   ].freeze
 
-  has_many :systems
+  # Rejecting a pending vendor destroys the row. Systems pointing at it must be
+  # detached first: nullifying vendor_id here would silently re-classify them as
+  # in-house, and cascading would delete inventory nobody asked to remove. The
+  # Rejecter guards this explicitly; this is the backstop (and the FK's, which
+  # would otherwise surface as a 500).
+  has_many :systems, dependent: :restrict_with_error
   has_many :assessments, as: :asset, dependent: :destroy
 
   validates :category, inclusion: { in: CATEGORIES }, allow_nil: true

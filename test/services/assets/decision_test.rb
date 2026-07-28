@@ -51,6 +51,27 @@ module Assets
       end
     end
 
+    # Systems can be submitted against a still-pending vendor; destroying the
+    # vendor row would hit the FK and 500. Report the blocker instead.
+    test "rejecting a vendor that systems point at is refused, not a crash" do
+      vendor = vendors(:pending_vendor)
+      System.create!(name: "Tool On Pending Vendor", owner: users(:employee), vendor: vendor, status: "active")
+
+      result = nil
+      assert_no_difference("Vendor.count") do
+        result = Rejecter.call(asset: vendor, actor: users(:compliance))
+      end
+      assert_not result.success
+      assert_equal :has_linked_systems, result.code
+      assert_equal 1, result.context[:count]
+      assert_empty AuditEvent.where(event_type: "vendor.rejected")
+    end
+
+    test "the vendor row itself refuses to be destroyed while systems point at it" do
+      assert_not vendors(:acme).destroy
+      assert Vendor.exists?(vendors(:acme).id)
+    end
+
     test "only compliance decides, and only pending assets" do
       assert_equal :not_permitted, Approver.call(asset: vendors(:pending_vendor), actor: users(:admin)).code
       assert_equal :not_permitted, Rejecter.call(asset: vendors(:pending_vendor), actor: users(:owner)).code
