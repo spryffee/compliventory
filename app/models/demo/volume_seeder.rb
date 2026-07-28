@@ -47,10 +47,14 @@ module Demo
     BATCH = 500
     DEFAULT_SEED = 20_260_728
 
-    # Pending change proposals — flat, NOT derived from the scale. The two
-    # surfaces that show them (/compliance and /inbox) are not paginated, so
-    # letting this grow with the inventory just yields one endless page.
-    PENDING_PROPOSALS = 10
+    # Everything queued for a human lands on /compliance or /inbox, and NEITHER
+    # is paginated — so these are queue lengths, flat, never derived from the
+    # scale. Growing them with the inventory just yields one endless page.
+    PENDING_PROPOSALS = 10        # ⚖ field changes + owner-lane, across both queues
+    PENDING_APPROVAL_PER_TYPE = 5 # vendors and systems still awaiting approval
+    IN_PROGRESS_ASSESSMENTS = 8   # assessments open on someone's desk
+    OVERDUE_VENDORS = 12          # active vendors past their review date
+    NEVER_ASSESSED_VENDORS = 12   # active vendors with no assessment yet
 
     # One dial: `scale` is the number of generated vendors; everything else is
     # derived from it so the mix stays sane at any size.
@@ -96,17 +100,22 @@ module Demo
 
     def seed_vendors!(count, user_ids, rng)
       offset = Vendor.count
+      active_rank = 0
       rows = Array.new(count) do |i|
         n = offset + i
         name = "#{ADJECTIVES[n % ADJECTIVES.size]} #{NOUNS[(n / ADJECTIVES.size) % NOUNS.size]} #{format('%04d', n)}"
         created = past(rng, 730)
-        assessed, review = review_dates(n, rng)
+        status = status_for(Vendor::STATUSES, i, n)
+        # Only active vendors reach the review queue, so rank them as they come
+        # and cap the queue buckets by that rank rather than by row number.
+        active_rank += 1 if status == "active"
+        assessed, review = review_dates(status, status == "active" ? active_rank : nil, n, rng, count)
         {
           name: name,
           website: "https://#{name.parameterize}.example",
           description: "#{NOUNS[(n / 3) % NOUNS.size]} platform for #{DEPARTMENTS[n % DEPARTMENTS.size].downcase}.",
           category: nilable(Vendor::CATEGORIES, n, 11, rng),
-          status: weighted_status(Vendor::STATUSES, n),
+          status: status,
           owner_id: user_ids.sample(random: rng),
           contact_name: (n % 4).zero? ? nil : "#{FIRST_NAMES[n % FIRST_NAMES.size]} #{LAST_NAMES[n % LAST_NAMES.size]}",
           contact_email: (n % 5).zero? ? nil : "vendor#{n}@#{name.parameterize}.example",
@@ -123,14 +132,29 @@ module Demo
       Vendor.pluck(:id, :name, :status)
     end
 
-    # The four buckets behind the vendors table's review-status filter, so each
-    # one returns a non-trivial page. "never" leaves both dates nil.
-    def review_dates(n, rng)
-      case n % 4
-      when 0 then [ nil, nil ]                                                           # never assessed
-      when 1 then [ Date.current - rng.rand(400..900), Date.current - rng.rand(1..300) ]  # overdue
-      when 2 then [ Date.current - rng.rand(300..700), Date.current + rng.rand(1..30) ]   # due soon
-      else        [ Date.current - rng.rand(1..200),   Date.current + rng.rand(31..900) ] # ok
+    # The four buckets behind the vendors table's review-status filter.
+    #
+    # Two of them — overdue and never-assessed — are ALSO the /compliance review
+    # queue, and that page lists every row. They are the same query, so the queue
+    # cannot be short while the filter is deep: the caps win, and those filters
+    # return one page. "Due soon" and "up to date" appear only in the paginated
+    # table, so they absorb everything else and keep the volume.
+    def review_dates(status, active_rank, n, rng, count)
+      return [ nil, nil ] if status == "pending_approval" # never approved, never assessed
+
+      # A flat cap would swallow every active vendor at a small scale and leave
+      # the other two buckets empty, so the caps also stay a share of the batch.
+      overdue_cap = [ OVERDUE_VENDORS, count / 8 ].min
+      never_cap = [ NEVER_ASSESSED_VENDORS, count / 8 ].min
+
+      if active_rank&.<= overdue_cap
+        [ Date.current - rng.rand(400..900), Date.current - rng.rand(1..300) ]  # overdue
+      elsif active_rank&.<= (overdue_cap + never_cap)
+        [ nil, nil ]                                                            # never assessed
+      elsif n.even?
+        [ Date.current - rng.rand(300..700), Date.current + rng.rand(1..30) ]   # due soon
+      else
+        [ Date.current - rng.rand(1..200), Date.current + rng.rand(31..900) ]   # up to date
       end
     end
 
@@ -149,7 +173,7 @@ module Demo
           # filter and the left-outer-join sort both need coverage.
           vendor_id: (n % 3).zero? ? nil : vendor_ids.sample(random: rng),
           description: "Internal #{SYSTEM_NOUNS[n % SYSTEM_NOUNS.size].downcase} used by #{DEPARTMENTS[n % DEPARTMENTS.size]}.",
-          status: weighted_status(System::STATUSES, n),
+          status: status_for(System::STATUSES, i, n),
           owner_id: user_ids.sample(random: rng),
           technical_owner_id: (n % 3).zero? ? nil : user_ids.sample(random: rng),
           department: nilable(DEPARTMENTS, n, 9, rng),
@@ -186,8 +210,10 @@ module Demo
       # in-progress slice draws from DISTINCT vendors that have none already.
       busy = Assessment.in_progress.where(asset_type: "Vendor").pluck(:asset_id).to_set
       free = assessable.reject { |(id, _, _)| busy.include?(id) }
-      in_progress = free.sample([ count / 3, free.size ].min, random: rng)
-      completed = assessable.sample(count - in_progress.size, random: rng)
+      # In-progress rows sit in the /compliance queue, so they get a flat cap;
+      # completed ones are history and only ever reached from a vendor page.
+      in_progress = free.sample([ IN_PROGRESS_ASSESSMENTS, free.size ].min, random: rng)
+      completed = assessable.sample([ count - in_progress.size, 0 ].max, random: rng)
 
       rows = in_progress.map { |(id, _, _)| assessment_row(id, user_ids, rng, completed: false) } +
              completed.map { |(id, _, _)| assessment_row(id, user_ids, rng, completed: true) }
@@ -337,8 +363,16 @@ module Demo
     end
 
     # Mostly active, with a real tail of the other lifecycle states.
-    def weighted_status(statuses, n)
-      (n % 10) < 6 ? "active" : statuses[n % statuses.size]
+    #
+    # `pending_approval` is the exception and is capped by row index rather than
+    # sampled: it is the only status that puts a row in front of a human, and
+    # /compliance lists every one of them on a single unpaginated page. The
+    # terminal states (offboarded/archived, deprecated/retired) stay plentiful —
+    # nothing lists those unpaginated, and the status filter wants rows to find.
+    def status_for(statuses, i, n)
+      return statuses[0] if i < PENDING_APPROVAL_PER_TYPE # pending_approval
+      return statuses[1] if (n % 10) < 6                  # active
+      statuses[2 + (n % 2)]                               # the two terminal states
     end
 
     def report
