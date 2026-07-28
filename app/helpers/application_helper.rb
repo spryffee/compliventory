@@ -77,6 +77,24 @@ module ApplicationHelper
     end
   end
 
+  # Events whose substance lives in metadata rather than a field diff. An
+  # assessment's outcome IS the compliance fact, and the assigned risk tier is a
+  # review result, not an edit — so it is shown as an assignment ("High", or
+  # "High (was Medium)"), never as a "high → high" diff. Rendered per event type
+  # on purpose: metadata is never dumped generically, it also carries internals
+  # (snapshots, proposal_id, api_token_id).
+  #
+  # Returns [label, value] pairs; a nil label renders the value on its own.
+  def audit_outcome(event)
+    meta = event.metadata || {}
+    case event.event_type
+    when "assessment.completed" then assessment_outcome_lines(meta)
+    when "assessment.started"   then [ [ "Inherent risk", risk_word(meta["inherent_risk"]) ] ]
+    when "assessment.cancelled" then [ [ nil, "Abandoned — no outcome recorded" ] ]
+    else []
+    end
+  end
+
   # One labelled row on an asset detail page.
   def detail_row(label, value = nil, &block)
     content = block ? capture(&block) : value
@@ -101,6 +119,36 @@ module ApplicationHelper
 
   def audit_timestamp(time)
     tag.time(time.strftime("%b %-d, %Y %H:%M"), datetime: time.iso8601, title: time.iso8601, class: "whitespace-nowrap")
+  end
+
+  # Risk level for prose, not a chip. Blank → "Unscored" (matches risk_pill).
+  def risk_word(level)
+    level.presence&.humanize || "Unscored"
+  end
+
+  # `next_review_on` is stamped into metadata as a plain "YYYY-MM-DD" string;
+  # anything unparseable is shown verbatim rather than swallowed.
+  def audit_review_date(raw)
+    return nil if raw.blank?
+    Date.parse(raw).strftime("%b %-d, %Y")
+  rescue Date::Error
+    raw
+  end
+
+  # "High (was Medium)" only when the tier actually moved. A first assessment
+  # (no previous tier) and a re-review that confirms the tier both read as a
+  # plain assignment. Events recorded before `previous_risk_tier` existed simply
+  # omit the parenthetical — the audit log is append-only, never backfilled.
+  def assessment_outcome_lines(meta)
+    residual = risk_word(meta["residual_risk"])
+    previous = meta["previous_risk_tier"]
+    residual = "#{residual} (was #{risk_word(previous)})" if previous.present? && previous != meta["residual_risk"]
+
+    [
+      [ "Residual risk", residual ],
+      [ "Decision", meta["decision"]&.humanize ],
+      [ "Next review", audit_review_date(meta["next_review_on"]) ]
+    ].reject { |_, value| value.blank? }
   end
 
   # The compliventory mark: three shelf slabs, top one pine.

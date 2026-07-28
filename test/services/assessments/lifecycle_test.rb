@@ -96,9 +96,30 @@ module Assessments
       assert_equal Date.current, @vendor.last_assessed_on
       assert_equal review_date, @vendor.next_review_on
 
+      # The assigned tier is a review outcome, not a field edit: it belongs in
+      # metadata, not in an attribute_changes diff (which would render a
+      # confirming re-review as a meaningless "high → high").
       event = AuditEvent.where(event_type: "assessment.completed").sole
-      assert_equal({ "risk_tier" => [ "medium", "low" ] }, event.attribute_changes)
+      assert_nil event.attribute_changes
       assert_equal "approved", event.metadata["decision"]
+      assert_equal "low", event.metadata["residual_risk"]
+      assert_equal "medium", event.metadata["previous_risk_tier"]
+      assert_equal review_date.to_s, event.metadata["next_review_on"]
+    end
+
+    test "a re-review that confirms the tier records it as the outcome, not a diff" do
+      first = Starter.call(vendor: @vendor, actor: @compliance).value
+      Completer.call(assessment: first, actor: @compliance, residual_risk: "medium",
+                     decision: "approved", next_review_on: Date.current + 1.year)
+
+      second = Starter.call(vendor: @vendor.reload, actor: @compliance).value
+      Completer.call(assessment: second, actor: @compliance, residual_risk: "medium",
+                     decision: "approved", next_review_on: Date.current + 2.years)
+
+      event = AuditEvent.where(event_type: "assessment.completed").recent_first.first
+      assert_nil event.attribute_changes
+      assert_equal "medium", event.metadata["residual_risk"]
+      assert_equal "medium", event.metadata["previous_risk_tier"]
     end
 
     test "completion requires residual risk, decision and next review date" do

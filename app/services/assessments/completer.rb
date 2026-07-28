@@ -2,7 +2,10 @@ module Assessments
   # Completes an in-progress assessment: freezes it into a compliance record and
   # writes the outcome back onto the vendor — residual risk becomes the vendor's
   # risk_tier, and the review dates are stamped. One transaction, one audit event
-  # carrying the risk_tier change. The model enforces that a completed record
+  # carrying the whole outcome in metadata (the assigned tier is a review result,
+  # not a field edit, so it is NOT an attribute_changes diff — a re-review that
+  # confirms the tier is a real outcome, not a no-op). The model enforces that a
+  # completed record
   # carries residual_risk, decision and next_review_on (and conditions when the
   # decision is approved_with_conditions), so a bad payload fails the save.
   class Completer < ApplicationService
@@ -20,7 +23,7 @@ module Assessments
       return failure(:not_in_progress) unless @assessment.in_progress?
 
       vendor = @assessment.asset
-      tier_change = [ vendor.risk_tier, @residual_risk ]
+      previous_tier = vendor.risk_tier
 
       ActiveRecord::Base.transaction do
         @assessment.update!(
@@ -40,11 +43,11 @@ module Assessments
           event_type: "assessment.completed",
           actor: @actor,
           targets: [ @assessment, vendor ],
-          attribute_changes: { "risk_tier" => tier_change },
           metadata: {
             "source" => "web-ui",
             "decision" => @decision,
             "residual_risk" => @residual_risk,
+            "previous_risk_tier" => previous_tier,
             "inherent_risk" => @assessment.inherent_risk,
             "next_review_on" => @assessment.next_review_on.to_s
           }

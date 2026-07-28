@@ -12,6 +12,16 @@
       <div class="text-xs text-gray-500 mt-0.5">
         by <%= event.actor_display || "system" %>
       </div>
+      <% outcome = audit_outcome(event) %>
+      <% if outcome.any? %>
+        <div class="mt-1.5 space-y-0.5">
+          <% outcome.each do |label, value| %>
+            <div class="text-xs text-gray-600">
+              <% if label %><span class="font-medium"><%= label %></span>: <% end %><%= value %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
       <% if event.attribute_changes.present? %>
         <div class="mt-1.5 space-y-0.5">
           <% event.attribute_changes.each do |field, (from, to)| %>

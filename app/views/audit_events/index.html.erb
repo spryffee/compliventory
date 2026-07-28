@@ -40,6 +40,16 @@
               <%= safe_join(event.targets.map { |t| audit_target_tag(t) }, ", ") %>
             </td>
             <td>
+              <% outcome = audit_outcome(event) %>
+              <% if outcome.any? %>
+                <div class="space-y-0.5">
+                  <% outcome.each do |label, value| %>
+                    <div class="text-xs text-gray-600">
+                      <% if label %><span class="font-medium"><%= label %></span>: <% end %><%= value %>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
               <% if event.attribute_changes.present? %>
                 <div class="space-y-0.5">
                   <% event.attribute_changes.each do |field, (from, to)| %>

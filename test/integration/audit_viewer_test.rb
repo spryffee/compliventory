@@ -40,4 +40,33 @@ class AuditViewerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "owner change"
     assert_not_includes response.body, "Criticality"
   end
+
+  # acme is risk_tier "medium"; assessing it at "medium" again is the confirming
+  # re-review that used to render as a bare "medium → medium" diff.
+  test "a completed assessment shows its outcome, not a risk-tier diff" do
+    sign_in_as users(:compliance)
+    post vendor_assessments_path(vendors(:acme))
+    assessment = Assessment.in_progress.sole
+    patch complete_vendor_assessment_path(vendors(:acme), assessment), params: {
+      residual_risk: "medium", decision: "approved", next_review_on: Date.current + 2.years
+    }
+
+    get audit_events_path(event_type: "assessment.completed")
+    assert_response :success
+    assert_includes response.body, "Residual risk"
+    assert_includes response.body, "Decision"
+    assert_includes response.body, "Approved"
+    assert_includes response.body, (Date.current + 2.years).strftime("%b %-d, %Y")
+    assert_not_includes response.body, "→ Medium"
+    assert_not_includes response.body, "medium → medium"
+  end
+
+  test "a started assessment reports its inherent risk instead of an empty cell" do
+    sign_in_as users(:compliance)
+    post vendor_assessments_path(vendors(:acme))
+
+    get audit_events_path(event_type: "assessment.started")
+    assert_response :success
+    assert_includes response.body, "Inherent risk"
+  end
 end
