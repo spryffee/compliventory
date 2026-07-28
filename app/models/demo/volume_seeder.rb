@@ -47,6 +47,11 @@ module Demo
     BATCH = 500
     DEFAULT_SEED = 20_260_728
 
+    # Pending change proposals — flat, NOT derived from the scale. The two
+    # surfaces that show them (/compliance and /inbox) are not paginated, so
+    # letting this grow with the inventory just yields one endless page.
+    PENDING_PROPOSALS = 10
+
     # One dial: `scale` is the number of generated vendors; everything else is
     # derived from it so the mix stays sane at any size.
     def call(scale:, seed: DEFAULT_SEED)
@@ -57,7 +62,7 @@ module Demo
       vendors = seed_vendors!(scale, user_ids, rng)
       systems = seed_systems!((scale * 2.25).round, user_ids, vendors, rng)
       seed_assessments!([ scale / 7, 3 ].max, vendors, user_ids, rng)
-      seed_proposals!([ scale / 8, 4 ].max, vendors, systems, user_ids, rng)
+      seed_proposals!(PENDING_PROPOSALS, vendors, systems, user_ids, rng)
       seed_audit_events!(scale * 5, vendors, systems, rng)
       report
     end
