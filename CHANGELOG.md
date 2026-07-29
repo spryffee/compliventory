@@ -16,6 +16,15 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+### Changed
+
+- The admin navbar no longer shows the signed-in user's name.
+
+### Fixed
+
+- The published image now carries the `service` label Kamal checks on pull. Deploying 0.1.0
+  with Kamal failed at the pull step with *"Image … is missing the 'service' label"*.
+
 ## 0.1.0 — 2026-07-29
 
 ### Commits
