@@ -19,6 +19,13 @@ module AssetTablesHelper
     end
   end
 
+  # Where the full-screen toggle comes back to: the current search, filters and
+  # sort, minus `page` — the toggle changes rows-per-page, so page N no longer
+  # means the same rows (and may be past the end).
+  def table_return_path
+    url_for(request.query_parameters.except("page").symbolize_keys.merge(only_path: true))
+  end
+
   # Header link: toggles direction on the active column, keeps search/filters,
   # resets pagination.
   def table_sort_link(table, column)

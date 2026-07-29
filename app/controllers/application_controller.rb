@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   # (login, OIDC callback, dev sign-in) skip this.
   before_action :require_login!
 
-  helper_method :current_user, :signed_in?, :demo_mode?
+  helper_method :current_user, :signed_in?, :demo_mode?, :expanded_tables?
 
   private
 
@@ -30,6 +30,14 @@ class ApplicationController < ActionController::Base
 
   def demo_mode?
     Demo.enabled?
+  end
+
+  # Full-viewport table mode (see TableViewsController). Deliberately a cookie
+  # and not users.ui_preferences: filling the screen is a property of the screen
+  # you are sitting at, not of the account. Being readable on the server it also
+  # renders in the first response — no flash of the narrow layout.
+  def expanded_tables?
+    cookies[:table_view] == "expanded"
   end
 
   def sign_in(user)

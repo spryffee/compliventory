@@ -47,6 +47,42 @@ class AssetTablesTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "sort=risk_tier"
   end
 
+  test "full screen mode is a cookie, so it survives navigation" do
+    sign_in_as users(:employee)
+
+    patch table_view_path, params: { expanded: "1", return_to: "/vendors?status=active" }
+    assert_redirected_to "/vendors?status=active"
+    assert_equal "expanded", cookies[:table_view]
+
+    get vendors_path
+    assert_response :success
+    assert_includes response.body, "table-expanded"
+    assert_includes response.body, "Exit full screen"
+
+    patch table_view_path, params: { expanded: "0", return_to: "/vendors" }
+    get vendors_path
+    assert_response :success
+    assert_not_includes response.body, "table-expanded"
+  end
+
+  test "full screen fits more rows on a page" do
+    26.times { |i| Vendor.create!(name: "Bulk #{i}", owner: users(:owner), status: "active") }
+    sign_in_as users(:employee)
+
+    get vendors_path
+    assert_includes response.body, "Page 1 of 2"
+
+    cookies[:table_view] = "expanded"
+    get vendors_path
+    assert_not_includes response.body, "Page 1 of"
+  end
+
+  test "the full screen toggle refuses to redirect off-site" do
+    sign_in_as users(:employee)
+    patch table_view_path, params: { expanded: "1", return_to: "//evil.example/vendors" }
+    assert_redirected_to root_path
+  end
+
   test "unknown table key is a bad request" do
     sign_in_as users(:employee)
     patch table_preference_path("nonsense"), params: { columns: %w[name] }

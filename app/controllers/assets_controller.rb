@@ -5,13 +5,18 @@
 class AssetsController < ApplicationController
   include Pagy::Method
 
+  PAGE_SIZE = 25
+  # Expanded mode exists to scan many columns on a big screen; a 25-row page
+  # would leave most of it empty.
+  EXPANDED_PAGE_SIZE = 100
+
   before_action :set_asset, only: %i[show edit update approve reject]
 
   helper_method :policy
 
   def index
     @table = table_class.new(user: current_user, params: params)
-    @pagy, @assets = pagy(:offset, @table.scope, limit: 25)
+    @pagy, @assets = pagy(:offset, @table.scope, limit: expanded_tables? ? EXPANDED_PAGE_SIZE : PAGE_SIZE)
   end
 
   def show

@@ -36,6 +36,7 @@ Rails.application.routes.draw do
   end
 
   patch "/table_preferences/:table" => "table_preferences#update", as: :table_preference
+  patch "/table_view" => "table_views#update", as: :table_view
 
   get "/inbox"      => "inbox#show",      as: :inbox
   get "/compliance" => "compliance#show", as: :compliance

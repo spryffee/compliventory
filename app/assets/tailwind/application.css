@@ -98,15 +98,50 @@
   .field-hint  { @apply text-xs text-gray-500 mt-1; }
 
   /* Data tables --------------------------------------------------------- */
-  .data-table { @apply w-full text-sm; }
+  /* Separate (not the browser-default collapsed) borders: a collapsed border
+     belongs to the table, not the cell, and is dropped from sticky cells — so
+     the frozen column and sticky header below would lose their edges. The rule
+     that follows from it: row separators live on the cells, not on the row. */
+  .data-table { @apply w-full text-sm border-separate border-spacing-0; }
   .data-table thead th {
     @apply text-left font-medium text-xs uppercase tracking-wide text-gray-500
            bg-gray-50 px-4 py-2.5 border-b border-gray-200;
   }
-  .data-table tbody td   { @apply px-4 py-3 align-middle; }
-  .data-table tbody tr   { @apply border-b border-gray-100; }
-  .data-table tbody tr:last-child { @apply border-b-0; }
+  .data-table tbody td   { @apply px-4 py-3 align-middle border-b border-gray-100; }
+  .data-table tbody tr:last-child td { @apply border-b-0; }
   .data-table tbody tr.row-hover:hover { @apply bg-gray-50; }
+
+  /* A denser variant for screens showing many rows at once. */
+  .data-table-compact thead th { @apply py-1.5; }
+  .data-table-compact tbody td { @apply py-2; }
+
+  /* Wide tables: scroll horizontally instead of squeezing the columns, with
+     the identity column frozen so a row stays identifiable. Wrap the table:
+     <div class="panel"><div class="table-scroll"><table class="data-table"> */
+  .table-scroll { @apply overflow-x-auto; }
+  /* Scroll rather than wrap: a squeezed column turns every row into three
+     lines, which costs more screen than the scrollbar does. Safe because no
+     asset column is free-form prose — the longest are emails and department
+     names. The empty-state cell (the only colspan) keeps wrapping. */
+  .table-scroll .data-table th,
+  .table-scroll .data-table td:not([colspan]) { @apply whitespace-nowrap; }
+  .table-scroll .data-table th:first-child,
+  .table-scroll .data-table td:first-child:not([colspan]) {
+    @apply sticky left-0 border-r border-gray-200;
+  }
+  .table-scroll .data-table thead th:first-child { @apply z-30; }
+  .table-scroll .data-table tbody td:first-child:not([colspan]) { @apply z-10 bg-white; }
+  .table-scroll .data-table tbody tr.row-hover:hover td:first-child { @apply bg-gray-50; }
+
+  /* Full-viewport table mode (shared/_asset_table + table_expand_controller).
+     Leaves the max-w-5xl column and covers the fixed nav (z-40). Only here is
+     the header row sticky: .table-scroll is a scroll container on both axes, so
+     `top: 0` sticks to the container — which is useful only once the container
+     has a bounded height, as it does inside this flex column. */
+  .table-expanded { @apply fixed inset-0 z-50 flex flex-col bg-white p-4; }
+  .table-expanded > .panel { @apply flex-1 min-h-0; }
+  .table-expanded .table-scroll { @apply h-full overflow-auto; }
+  .table-expanded .data-table thead th { @apply sticky top-0 z-20; }
 
   /* Pills / badges ------------------------------------------------------ */
   .pill {

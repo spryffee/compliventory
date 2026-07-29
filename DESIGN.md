@@ -234,6 +234,15 @@ Server-side everything, no JS grid library:
   `users.ui_preferences["vendors_table_columns"]` via a small endpoint, server renders only
   chosen columns. Cross-device, no flash-of-hidden-columns.
 - **Pagination:** Pagy.
+- **Full screen:** a button flips the table into a fixed, full-viewport overlay — page
+  chrome gone, denser rows, sticky header, 100 rows per page instead of 25. Escape exits.
+  The state is a `table_view` cookie, not `ui_preferences`: filling the screen is a property
+  of the screen you're at, not of the account, and a cookie is readable on the server, so the
+  mode survives the full-page navigation that every sort and filter is. Because page size
+  changes with it, the toggle is a round-trip (`TableViewsController`) rather than a class
+  flipped in the browser — one render decides width, density and page size together.
+- **Wide tables** scroll horizontally with the name column frozen; cells don't wrap. Sticky
+  cells lose collapsed borders, hence `border-separate` on `.data-table`.
 - Table config is declarative per asset type (column key → label, sort expr, filter type,
   default-visible) — one `AssetTable` presenter, two configs.
 
