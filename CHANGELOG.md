@@ -16,6 +16,8 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+## 0.2.0 — 2026-07-29
+
 ### Added
 
 - **Full-screen tables.** A *Full screen* button on the vendors and systems tables drops the
