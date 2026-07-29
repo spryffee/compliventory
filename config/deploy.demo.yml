@@ -10,6 +10,21 @@
 # time if a value is missing, so you can't ship a placeholder.
 <% require "dotenv"; Dotenv.load(".env.demo") %>
 
+# The demo runs published releases, not local builds — deploying it is the last
+# check that what GHCR actually serves boots and migrates. Overrides the
+# localhost:5555 local registry the default (no-destination) deploy uses.
+#
+# ALWAYS deploy this destination as:  kamal deploy -d demo -P --version X.Y.Z
+# Without -P Kamal would build the working tree and push it to the *public*
+# package under a git-sha tag.
+image: spryffee/compliventory
+
+registry:
+  server: ghcr.io
+  username: spryffee
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
 servers:
   web:
     - <%= ENV.fetch("SERVER_IP") { raise "Set SERVER_IP before deploying the demo" } %>
