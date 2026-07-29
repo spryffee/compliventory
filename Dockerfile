@@ -63,7 +63,8 @@ FROM base
 # Release metadata, stamped by the release workflow. `docker inspect` then
 # answers "what is actually running here" without a shell into the container.
 ARG APP_VERSION="dev"
-LABEL org.opencontainers.image.title="compliventory" \
+LABEL service="compliventory" \
+      org.opencontainers.image.title="compliventory" \
       org.opencontainers.image.description="Self-hosted inventory of vendors and systems with change control and an append-only audit log" \
       org.opencontainers.image.source="https://github.com/spryffee/compliventory" \
       org.opencontainers.image.licenses="AGPL-3.0-or-later" \

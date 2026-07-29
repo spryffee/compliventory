@@ -134,6 +134,9 @@ kamal setup -P --version 0.1.0
 `-P` (`--skip-push`) is what makes Kamal deploy the released image rather than build one
 from your source, and `--version` picks the tag.
 
+Leave `service:` as `compliventory`. Kamal refuses to deploy an image whose `service`
+label doesn't match, and the published image is labelled for that name.
+
 ## Install with Docker Compose
 
 Supported for when Kamal doesn't fit. You bring your own TLS-terminating proxy and accept
