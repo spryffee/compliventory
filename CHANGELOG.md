@@ -16,8 +16,50 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
-<!--
-Add upgrade notes here as you make the change that needs them, not at release time.
-The release workflow turns this section into the next version's entry and appends
-the commit list underneath.
--->
+## 0.1.0 — 2026-07-29
+
+### Commits
+
+- Update release.yml
+- Revert "Release 0.1.0"
+- Release 0.1.0
+- Implement release flow
+- Do not mention demo volume in quickstart
+- Update docs
+- Fix volume seeder
+- Reduce number of pending proposals for demo
+- Seed demo volume so the dynamic tables have something to do
+- Sync docs with the current behaviour
+- Stop repeating the vendor name in audit targets
+- Render assessment outcomes in the audit log
+- Fix digest nag
+- Fix false being dropped as a blank field and 500 on vendor rejection
+- Seed assessment demo data and document assessments
+- Add assessment email notifications
+- Surface assessments in compliance inbox and vendors table
+- Redesign vendor risk panel
+- Add assessment pages and vendor risk panel
+- Add assessment lifecycle services and policy
+- Add inherent risk scorer for vendors
+- Add assessments schema and model
+- Design assessment
+- Fix privilege escalation: judge asset ownership by persisted owner_id
+- Ignore blank-to-blank field no-ops when diffing asset edits
+- Show owner/vendor names instead of ids in change diffs
+- Add favicon to docs site
+- Use per-destination .env.demo instead of a single prefixed .env
+- Set dotenv approarch for secrets
+- Add favicon
+- Add public demo mode
+- Fix flash placement
+- Remove system tests from CI
+- Add LICENSE
+- Add docs site - Jekyll + Just the Docs on GitHub Pages
+- Implement dynamic tables - declarative presenters, sort/filter/search, column picker in ui_preferences
+- Implement change control - proposal lanes, decision services, inboxes, email notifications
+- Implement inventory core
+- implement auth + users - ENV OIDC, email matching, roles, sync API
+- Rails 8.1 skeleton: UUID PKs, Tailwind component layer, CI, Postgres
+- Add requirements and MVP design docs
+- Initial commit
+
