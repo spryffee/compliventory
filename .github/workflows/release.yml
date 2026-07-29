@@ -63,8 +63,12 @@ jobs:
       - name: Lint
         run: bin/rubocop -f github
 
+      # Static analysis only. bundler-audit deliberately stays in CI and out of
+      # here: it fetches a live advisory database, so it can fail the release
+      # button over a gem advisory published after the code was written — a
+      # thing to fix in a pull request, not a reason a release cannot go out.
       - name: Scan for security vulnerabilities
-        run: bin/brakeman --no-pager && bin/bundler-audit
+        run: bin/brakeman --no-pager
 
   release:
     needs: test
@@ -116,7 +120,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add VERSION CHANGELOG.md
           git commit -m "Release ${{ steps.prep.outputs.version }}"
-          git tag "v${{ steps.prep.outputs.version }}"
+          # Annotated, not lightweight: --follow-tags silently skips lightweight
+          # tags, so the commit lands and the tag stays behind on the runner.
+          git tag -a "v${{ steps.prep.outputs.version }}" -m "Release ${{ steps.prep.outputs.version }}"
           git push origin HEAD:${{ github.ref_name }} --follow-tags
 
       - name: Create the GitHub Release
