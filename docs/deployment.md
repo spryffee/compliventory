@@ -30,8 +30,7 @@ variables.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `SECRET_KEY_BASE` | — | **Required.** Generate once with `openssl rand -hex 64` and keep it — changing it signs everyone out. |
-| `RAILS_MASTER_KEY` | — | Only if you build the image from source. Published images carry no usable credentials, so `SECRET_KEY_BASE` replaces it. |
+| `SECRET_KEY_BASE` | — | **Required.** Signs session cookies. Any random string; generate one with `openssl rand -hex 64` and keep it — changing it signs everyone out. |
 | `COMPLIVENTORY_HOST` | `http://localhost:3000` | Public base URL — used for the OIDC `redirect_uri` and links in emails. Set to your public URL. |
 | `COMPLIVENTORY_DATABASE_HOST` | `localhost` | PostgreSQL host. |
 | `COMPLIVENTORY_DATABASE_USER` | `compliventory` | DB role the app connects as. |
@@ -52,6 +51,11 @@ variables.
 
 OIDC configuration is read per request, so changing it needs only a restart, and an
 unconfigured instance fails cleanly at sign-in rather than at boot.
+
+If the container dies at boot with *Missing `secret_key_base` … set this string with
+`bin/rails credentials:edit`*, `SECRET_KEY_BASE` is unset. Ignore the advice in that message:
+it points at an encrypted credentials file that ships inside the image but is not yours to
+decrypt. `RAILS_MASTER_KEY` is never needed here.
 
 ## Releases
 
@@ -114,7 +118,8 @@ accessories:
       - data:/var/lib/postgresql/data
 ```
 
-Put the secrets in `.kamal/secrets`, then:
+Put the secrets in `.kamal/secrets` — `SECRET_KEY_BASE` is a random string you generate once
+(`openssl rand -hex 64`); the other two come from your IdP and your database. Then:
 
 ```sh
 kamal setup -P --version 0.2.0
@@ -206,7 +211,7 @@ Your domain, server IP and DB password are **not committed** — they go in a gi
 
 ```sh
 cp .env.example .env.demo
-$EDITOR .env.demo      # set DOMAIN, SERVER_IP, COMPLIVENTORY_DATABASE_PASSWORD
+$EDITOR .env.demo      # DOMAIN, SERVER_IP, SECRET_KEY_BASE, COMPLIVENTORY_DATABASE_PASSWORD
 ```
 
 Then, with the registry filled in in `config/deploy.yml`:

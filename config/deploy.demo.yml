@@ -8,8 +8,14 @@
 # below loads it, so `kamal deploy -d demo` just works with no manual exports (an
 # explicit `export` still wins, since Dotenv.load never overrides a set var).
 # Copy `.env.example` to `.env.demo` and fill it in. ENV.fetch raises at deploy
-# time if a value is missing, so you can't ship a placeholder.
-<% require "dotenv"; Dotenv.load(".env.demo") %>
+# time if a value is missing, so you can't ship a placeholder. The values used
+# only through .kamal/secrets.demo are asserted here too — a `$VAR` in a secrets
+# file resolves to an empty string rather than failing, and an empty
+# SECRET_KEY_BASE stops the app at boot.
+<% require "dotenv"; Dotenv.load(".env.demo")
+   %w[SECRET_KEY_BASE COMPLIVENTORY_DATABASE_PASSWORD].each do |key|
+     raise "Set #{key} in .env.demo before deploying the demo" if ENV[key].to_s.empty?
+   end %>
 
 # The demo runs published releases, not local builds — deploying it is the last
 # check that what GHCR actually serves boots and migrates. Overrides the
@@ -61,7 +67,7 @@ env:
     # OIDC/SMTP are intentionally unset: the demo signs in via personas and
     # drops outgoing mail (nothing is actually delivered).
   secret:
-    - RAILS_MASTER_KEY
+    - SECRET_KEY_BASE
     - COMPLIVENTORY_DATABASE_PASSWORD
 
 # Postgres on the same server, private to the app. `db:prepare` (run by the
