@@ -55,21 +55,10 @@ unconfigured instance fails cleanly at sign-in rather than at boot.
 
 ## Releases
 
-Every release publishes a multi-arch image (amd64 + arm64) to GHCR:
-
-```
-ghcr.io/spryffee/compliventory:0.1.0    exactly this release
-ghcr.io/spryffee/compliventory:0.1      follow patches
-ghcr.io/spryffee/compliventory:0        follow minors
-ghcr.io/spryffee/compliventory:latest   follow everything — not for production
-```
-
-Pin the exact version in production and move deliberately. The version number is an
-upgrade contract — what each bump obliges you to do, and what changed in a given release,
-is in
+Every release publishes a multi-arch image (amd64 + arm64) to
+`ghcr.io/spryffee/compliventory`. Pin the exact version in production. The version number is
+an upgrade contract — what each bump obliges you to do is in
 [CHANGELOG.md](https://github.com/spryffee/compliventory/blob/main/CHANGELOG.md).
-The running version is shown in `/admin`, and in the image's
-`org.opencontainers.image.version` label for `docker inspect`.
 
 ## Install with Kamal (recommended)
 
@@ -128,7 +117,7 @@ accessories:
 Put the secrets in `.kamal/secrets`, then:
 
 ```sh
-kamal setup -P --version 0.1.0
+kamal setup -P --version 0.2.0
 ```
 
 `-P` (`--skip-push`) is what makes Kamal deploy the released image rather than build one
@@ -170,10 +159,20 @@ backwards across several is not — restore a database backup instead.
 ## Bootstrap the first admin
 
 Fresh install, empty users table, and sign-in requires a synced user — the carve-out is
-the seed task:
+the seed task. Put the variables in the app's own environment (`env: clear:` for Kamal,
+`environment:` for Compose):
+
+```
+BOOTSTRAP_ADMIN_EMAIL=you@corp.example
+BOOTSTRAP_ADMIN_NAME=Your Name
+```
+
+On a first deploy that is all — `db:prepare` seeds while initialising the database. If the
+app is already running, add them, redeploy, then run the seed task in the container:
 
 ```sh
-BOOTSTRAP_ADMIN_EMAIL=you@corp.example BOOTSTRAP_ADMIN_NAME="Your Name" bin/rails db:seed
+kamal app exec 'bin/rails db:seed'           # Kamal
+docker compose exec app bin/rails db:seed    # Compose
 ```
 
 Idempotent: creates (or promotes) that one admin and nothing else in production. Then
@@ -213,12 +212,15 @@ $EDITOR .env.demo      # set DOMAIN, SERVER_IP, COMPLIVENTORY_DATABASE_PASSWORD
 Then, with the registry filled in in `config/deploy.yml`:
 
 ```sh
-kamal setup -d demo                          # provisions the DB accessory + app
-kamal app exec -d demo 'bin/rails db:seed'   # one-time: load the demo dataset
+kamal setup  -d demo -P --version 0.2.0   # provisions the DB accessory + app
+kamal deploy -d demo -P --version 0.2.0   # from then on
 ```
 
-Subsequent deploys are just `kamal deploy -d demo`; the nightly job keeps the sandbox
-clean from then on.
+Always pass `-P --version`. This destination points at the public GHCR package, so a plain
+`kamal deploy -d demo` builds your working tree and pushes it there.
+
+The demo dataset needs no separate step: `db:prepare` runs on boot and seeds it while
+initialising the database, and the nightly job keeps it fresh from then on.
 
 ## Notes
 

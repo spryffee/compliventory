@@ -10,7 +10,7 @@ name: compliventory
 
 services:
   app:
-    image: ghcr.io/spryffee/compliventory:0.1.0
+    image: ghcr.io/spryffee/compliventory:0.2.0
     restart: unless-stopped
     depends_on:
       db:

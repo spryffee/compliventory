@@ -30,11 +30,11 @@ first. For a real install see [Deployment](deployment.md).
 ## 1. Run it
 
 ```sh
-bin/setup            # bundle + db:prepare, then starts bin/dev
-bin/rails db:seed    # demo users, vendors, systems, proposals and assessments
+bin/setup
 ```
 
-The app is at **<http://localhost:3000>**.
+Installs gems, creates and seeds the database, then starts the app in the foreground at
+**<http://localhost:3000>**.
 
 ## 2. Sign in
 
@@ -63,9 +63,6 @@ production:
    vendor's risk tier and review dates update.
 5. **Anywhere** — open an asset and scroll to **Activity**: every step above is there, with
    diffs and actors.
-
-*Vendors* and *Systems* are searchable, filterable per column, sortable on every column,
-and have a **Columns** picker saved to your user.
 
 Outgoing mail is not sent in development — it opens in the browser at
 **<http://localhost:3000/letter_opener>**.

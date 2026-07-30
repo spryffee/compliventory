@@ -1,4 +1,5 @@
-# Public-demo destination override — deploy with:  kamal deploy -d demo
+# Public-demo destination override — deploy with:
+#   kamal deploy -d demo -P --version X.Y.Z    (see the -P warning below)
 #
 # Infra-specific values (domain, server IP, DB password) live in a gitignored
 # `.env.demo` at the repo root — nothing private is committed. This is the
