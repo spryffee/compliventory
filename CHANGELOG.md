@@ -16,6 +16,18 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+### Changed
+
+- The vendors and systems toolbar is a row shorter: Columns and Full screen are right-aligned
+  on the search row.
+- The Kamal templates and docs ask for `SECRET_KEY_BASE` instead of `RAILS_MASTER_KEY`, which
+  only the maintainer can supply. Nothing to do on an existing install.
+
+### Fixed
+
+- The `docker run` example in the `Dockerfile` header passed `RAILS_MASTER_KEY` and could
+  never have worked.
+
 ## 0.2.0 — 2026-07-29
 
 ### Added
