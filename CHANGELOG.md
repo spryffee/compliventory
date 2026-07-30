@@ -16,6 +16,8 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+## 0.2.1 — 2026-07-30
+
 ### Changed
 
 - The vendors and systems toolbar is a row shorter: Columns and Full screen are right-aligned
