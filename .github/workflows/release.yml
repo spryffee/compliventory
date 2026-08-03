@@ -100,7 +100,7 @@ jobs:
       # arm64 is emulated and slow; it is what makes the image usable on Apple
       # Silicon and ARM VPSs, so it is worth the minutes.
       - name: Build and push image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
