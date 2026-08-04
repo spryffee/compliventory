@@ -16,6 +16,12 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+### Fixed
+
+- A vendor whose risk assessment is already under way no longer appears twice in the
+  compliance inbox — once as in progress, once as review due. The weekly digest email
+  always got this right; the screen now agrees with it.
+
 ## 0.2.1 — 2026-07-30
 
 ### Changed
