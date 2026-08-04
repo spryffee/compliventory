@@ -64,7 +64,7 @@ module Assessments
 
     def notify_owner(vendor)
       owner = vendor.owner
-      return if owner == @actor || !owner.active?
+      return unless notify?(owner, @actor)
 
       AssessmentMailer.with(recipient: owner, assessor: @actor.name, assessment: @assessment)
                       .completed.deliver_later

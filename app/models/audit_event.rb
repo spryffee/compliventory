@@ -14,6 +14,11 @@ class AuditEvent < ApplicationRecord
   scope :for_target, ->(record) {
     where("targets @> ?", [ { type: record.class.name, id: record.id } ].to_json)
   }
+  # Events carrying any of the given records. One containment test per record,
+  # so callers must hand in a bounded set (one user's assets, not the inventory).
+  scope :for_any_target, ->(records) {
+    records.any? ? records.map { |record| for_target(record) }.reduce(:or) : none
+  }
   scope :recent_first, -> { order(occurred_at: :desc) }
 
   # Canonical write path for the audit log. Do not call `create!` directly.

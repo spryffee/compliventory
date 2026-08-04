@@ -42,7 +42,7 @@ module Assets
     end
 
     def notify_owner(owner, snapshot)
-      return if owner == @actor || !owner.active?
+      return unless notify?(owner, @actor)
 
       AssetMailer.with(
         recipient: owner, decision: "rejected", decided_by: @actor.name,

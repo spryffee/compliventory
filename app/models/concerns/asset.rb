@@ -19,6 +19,15 @@ module Asset
     scope :active, -> { where(status: "active") }
   end
 
+  class_methods do
+    # The row-level twin of owned_or_delegated_to? — "assets this user is
+    # responsible for", as one query, for the dashboard and the owner inbox.
+    def owned_or_delegated_to(user)
+      where(owner_id: user.id)
+        .or(where(id: Delegation.where(user_id: user.id, asset_type: name).select(:asset_id)))
+    end
+  end
+
   def pending_approval?
     status == "pending_approval"
   end

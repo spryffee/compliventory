@@ -22,4 +22,10 @@ class ApplicationService
   def failure(code, **context)
     Result.new(success: false, value: nil, code: code, context: context)
   end
+
+  # Nobody is mailed about their own decision, and a deactivated user is mailed
+  # nothing at all.
+  def notify?(recipient, actor)
+    recipient != actor && recipient.active?
+  end
 end

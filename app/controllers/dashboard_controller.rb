@@ -16,15 +16,11 @@ class DashboardController < ApplicationController
   private
 
   def my_assets(klass)
-    klass.where(owner_id: current_user.id)
-         .or(klass.where(id: Delegation.where(user: current_user, asset_type: klass.name).select(:asset_id)))
-         .order(:name)
+    klass.owned_or_delegated_to(current_user).order(:name)
   end
 
   # Activity touching assets I own or co-manage, newest first.
   def recent_events
-    assets = @my_vendors + @my_systems
-    return AuditEvent.none if assets.empty?
-    assets.map { |asset| AuditEvent.for_target(asset) }.reduce(:or).recent_first.limit(8)
+    AuditEvent.for_any_target(@my_vendors + @my_systems).recent_first.limit(8)
   end
 end

@@ -17,13 +17,8 @@ class ChangeProposal < ApplicationRecord
   # Owner-lane proposals awaiting the given user: proposals on assets they own
   # or are delegated on.
   def self.for_owner_inbox(user)
-    vendor_ids = Vendor.where(owner_id: user.id).ids |
-                 Delegation.where(user: user, asset_type: "Vendor").pluck(:asset_id)
-    system_ids = System.where(owner_id: user.id).ids |
-                 Delegation.where(user: user, asset_type: "System").pluck(:asset_id)
-
-    owner_lane.where(asset_type: "Vendor", asset_id: vendor_ids)
-              .or(owner_lane.where(asset_type: "System", asset_id: system_ids))
+    owner_lane.where(asset_type: "Vendor", asset_id: Vendor.owned_or_delegated_to(user).select(:id))
+              .or(owner_lane.where(asset_type: "System", asset_id: System.owned_or_delegated_to(user).select(:id)))
   end
 
   # `attribute_changes` stores the base value ({ field => [base, proposed] }).
@@ -58,6 +53,17 @@ class ChangeProposal < ApplicationRecord
     when "compliance" then User.active.where(role: "compliance").to_a
     end
     (reviewers - [ proposer ]).uniq
+  end
+
+  # A decision destroys the row, so the event has to carry the proposal's
+  # identity itself. The channel and the decision stay with the caller.
+  def audit_identity
+    {
+      "proposal_id" => id,
+      "lane" => lane,
+      "proposer_id" => proposer_id,
+      "proposer" => proposer.audit_display
+    }
   end
 
   def audit_display

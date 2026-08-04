@@ -21,14 +21,7 @@ module Proposals
           targets: asset,
           attribute_changes: @proposal.attribute_changes,
           justification: @comment.presence,
-          metadata: {
-            "source" => "web-ui",
-            "proposal_id" => @proposal.id,
-            "lane" => @proposal.lane,
-            "proposer_id" => @proposal.proposer_id,
-            "proposer" => @proposal.proposer.audit_display,
-            "decision" => "rejected"
-          }
+          metadata: @proposal.audit_identity.merge("source" => "web-ui", "decision" => "rejected")
         )
       end
 
@@ -40,7 +33,7 @@ module Proposals
 
     def notify_proposer(asset)
       proposer = @proposal.proposer
-      return if proposer == @actor || !proposer.active?
+      return unless notify?(proposer, @actor)
 
       ProposalMailer.with(
         recipient: proposer, decision: "rejected", decided_by: @actor.name,
