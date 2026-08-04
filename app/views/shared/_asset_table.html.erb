@@ -10,59 +10,64 @@
 
 <div class="<%= "table-expanded" if expanded %>"
      data-controller="table-expand" data-table-expand-expanded-value="<%= expanded %>">
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4">
-    <% if expanded %>
-      <%# The page heading is outside this partial and hidden behind the overlay. %>
-      <h2 class="text-lg font-semibold tracking-tight text-gray-900 shrink-0"><%= table.table_key.capitalize %></h2>
-    <% end %>
-
-    <%= form_with url: base_path, method: :get, id: filter_form_id,
-          data: { controller: "autosubmit" }, class: "flex flex-wrap items-center gap-2" do |f| %>
-      <%= f.hidden_field :sort, value: params[:sort] if params[:sort].present? %>
-      <%= f.hidden_field :dir, value: params[:dir] if params[:dir].present? %>
-      <% table.filters.each do |filter| %>
-        <%= f.select filter.key, filter.options,
-              { include_blank: "All #{filter.label.downcase.pluralize}", selected: table.filter_value(filter.key) },
-              class: "input w-44 py-1.5 text-sm", data: { action: "change->autosubmit#submit" } %>
+  <div class="mb-4 space-y-2">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <% if expanded %>
+        <%# The page heading is outside this partial and hidden behind the overlay. %>
+        <h2 class="text-lg font-semibold tracking-tight text-gray-900 shrink-0"><%= table.table_key.capitalize %></h2>
       <% end %>
-      <% if table.filtered? %>
-        <%= link_to "Clear", base_path, class: "btn-quiet" %>
+
+      <%= form_with url: base_path, method: :get, id: filter_form_id,
+            data: { controller: "autosubmit" }, class: "flex flex-wrap items-center gap-2" do |f| %>
+        <%= f.hidden_field :sort, value: params[:sort] if params[:sort].present? %>
+        <%= f.hidden_field :dir, value: params[:dir] if params[:dir].present? %>
+        <% table.filters.each do |filter| %>
+          <%= f.select filter.key, filter.options,
+                { include_blank: "All #{filter.label.downcase.pluralize}", selected: table.filter_value(filter.key) },
+                class: "input w-44 py-1.5 text-sm", data: { action: "change->autosubmit#submit" } %>
+        <% end %>
+        <% if table.filtered? %>
+          <%= link_to "Clear", base_path, class: "btn-quiet" %>
+        <% end %>
       <% end %>
-    <% end %>
+    </div>
 
-    <%# Search is a toolbar item of its own rather than a field inside the filter
-        form, so it can sit at the left of its row while Columns / Full screen are
-        pushed to the right. The HTML `form` attribute keeps it part of the filter
-        form all the same — one submission carries search and filters together. %>
-    <%= search_field_tag :q, table.query, form: filter_form_id,
-          placeholder: "Search name or description…", class: "input w-72 py-1.5 text-sm" %>
+    <%# Second toolbar row: search at the left, Columns / Full screen at the
+        right, always on one line together — the filters above wrap on their own.
+        Search is not a field inside the filter form; the HTML `form` attribute
+        keeps it part of it all the same, so one submission carries search and
+        filters together. %>
+    <div class="flex items-center gap-3">
+      <%= search_field_tag :q, table.query, form: filter_form_id,
+            placeholder: "Search name or description…", class: "input w-144 min-w-0 py-1.5 text-sm" %>
 
-    <div class="flex items-center gap-2 ml-auto shrink-0">
-      <div class="relative" data-controller="menu">
-        <button type="button" class="btn btn-secondary btn-sm" data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-haspopup="true">
-          Columns
-        </button>
-        <div class="hidden absolute right-0 mt-1 w-56 card shadow-lg z-10 p-3" data-menu-target="panel">
-          <%= form_with url: table_preference_path(table.table_key), method: :patch do %>
-            <div class="space-y-1.5 mb-3">
-              <% table.columns.each do |column| %>
-                <label class="flex items-center gap-2 text-sm text-gray-700 <%= "opacity-50" if column.key == "name" %>">
-                  <%= check_box_tag "columns[]", column.key, table.visible_columns.include?(column),
-                        disabled: column.key == "name", id: "col_#{table.table_key}_#{column.key}" %>
-                  <%= column.label %>
-                </label>
-              <% end %>
-            </div>
-            <%= submit_tag "Apply", class: "btn btn-primary btn-xs w-full" %>
-          <% end %>
+      <div class="flex items-center gap-2 ml-auto shrink-0">
+        <div class="relative" data-controller="menu">
+          <button type="button" class="btn btn-secondary btn-sm" data-menu-target="button" data-action="menu#toggle" aria-expanded="false" aria-haspopup="true">
+            Columns
+          </button>
+          <div class="hidden absolute right-0 mt-1 w-56 card shadow-lg z-10 p-3" data-menu-target="panel">
+            <%= form_with url: table_preference_path(table.table_key), method: :patch do %>
+              <div class="space-y-1.5 mb-3">
+                <% table.columns.each do |column| %>
+                  <label class="flex items-center gap-2 text-sm text-gray-700 <%= "opacity-50" if column.key == "name" %>">
+                    <%= check_box_tag "columns[]", column.key, table.visible_columns.include?(column),
+                          disabled: column.key == "name", id: "col_#{table.table_key}_#{column.key}" %>
+                    <%= column.label %>
+                  </label>
+                <% end %>
+              </div>
+              <%= submit_tag "Apply", class: "btn btn-primary btn-xs w-full" %>
+            <% end %>
+          </div>
         </div>
-      </div>
 
-      <%= button_to (expanded ? "Exit full screen" : "Full screen"), table_view_path, method: :patch,
-            params: { expanded: expanded ? "0" : "1", return_to: table_return_path },
-            class: "btn btn-secondary btn-sm",
-            title: expanded ? "Back to the page (Esc)" : "Use the whole screen — more columns, more rows",
-            form: { class: "shrink-0", data: { table_expand_target: "exit" } } %>
+        <%= button_to (expanded ? "Exit full screen" : "Full screen"), table_view_path, method: :patch,
+              params: { expanded: expanded ? "0" : "1", return_to: table_return_path },
+              class: "btn btn-secondary btn-sm",
+              title: expanded ? "Back to the page (Esc)" : "Use the whole screen — more columns, more rows",
+              form: { class: "shrink-0", data: { table_expand_target: "exit" } } %>
+      </div>
     </div>
   </div>
 
