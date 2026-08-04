@@ -16,6 +16,8 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+## 0.2.2 — 2026-08-04
+
 ### Fixed
 
 - A vendor whose risk assessment is already under way no longer appears twice in the
