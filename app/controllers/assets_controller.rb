@@ -139,8 +139,10 @@ class AssetsController < ApplicationController
     permit_fields(policy.editable_fields)
   end
 
+  # Array columns have to be permitted as `{ field => [] }`; which fields those
+  # are comes from the schema rather than a list that can fall behind it.
   def permit_fields(fields)
-    keys = fields.map { |f| f == :personal_data_categories ? { personal_data_categories: [] } : f }
+    keys = fields.map { |f| asset_class.columns_hash[f.to_s]&.array ? { f => [] } : f }
     params.require(asset_class.model_name.param_key).permit(*keys)
   end
 end
