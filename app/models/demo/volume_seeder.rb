@@ -1,8 +1,8 @@
 module Demo
   # Bulk inventory laid down ON TOP of the curated demo dataset, so the dynamic
-  # tables have something to be dynamic about: /vendors, /systems and /audit page
-  # at 25 rows, and with nine vendors a visitor never sees pagination, a filter
-  # that narrows anything, or a sort that reorders anything.
+  # tables have something to be dynamic about: /vendors and /systems page at 25
+  # rows, and with nine vendors a visitor never sees pagination, a filter that
+  # narrows anything, or a sort that reorders anything.
   #
   # Runs only when a scale is asked for (`DEMO_VOLUME`, default 0) — Seeder.seed!
   # is unchanged otherwise, which keeps it idempotent and keeps the local
@@ -36,14 +36,6 @@ module Demo
                     Jensen Kowalski Lindqvist Moreau Novak Olsen Pereira Rossi Silva
                     Toivonen Vasquez].freeze
 
-    # Event types worth filtering by in /audit, weighted roughly like real traffic.
-    EVENT_TYPES = ([ "vendor.updated" ] * 5 + [ "system.updated" ] * 5 + [ "auth.login" ] * 4 +
-                   [ "proposal.created" ] * 3 + [ "proposal.approved" ] * 2 + [ "proposal.rejected" ] +
-                   [ "vendor.submitted" ] * 2 + [ "system.submitted" ] * 2 +
-                   [ "vendor.approved" ] + [ "vendor.rejected" ] +
-                   [ "assessment.started" ] * 2 + [ "assessment.completed" ] * 2 +
-                   [ "assessment.cancelled" ] + [ "user.role_changed" ]).freeze
-
     BATCH = 500
     DEFAULT_SEED = 20_260_728
 
@@ -67,7 +59,6 @@ module Demo
       systems = seed_systems!((scale * 2.25).round, user_ids, vendors, rng)
       seed_assessments!([ scale / 7, 3 ].max, vendors, user_ids, rng)
       seed_proposals!(PENDING_PROPOSALS, vendors, systems, user_ids, rng)
-      seed_audit_events!(scale * 5, vendors, systems, rng)
       report
     end
 
@@ -270,63 +261,6 @@ module Demo
       insert_batched(ChangeProposal, rows, nil)
     end
 
-    # --- audit events --------------------------------------------------------
-
-    def seed_audit_events!(count, vendors, systems, rng)
-      actors = User.pluck(:id, :name)
-      return if actors.empty? || vendors.empty? || systems.empty?
-
-      rows = Array.new(count) do |i|
-        type = EVENT_TYPES[i % EVENT_TYPES.size]
-        actor_id, actor_name = actors.sample(random: rng)
-        on_vendor = type.start_with?("vendor.", "assessment.") ||
-                    (!type.start_with?("system.") && rng.rand(2).zero?)
-        asset = on_vendor ? vendors.sample(random: rng) : systems.sample(random: rng)
-        {
-          event_type: type,
-          actor_type: "user", actor_id: actor_id, actor_display: actor_name,
-          targets: [ { "type" => on_vendor ? "Vendor" : "System", "id" => asset[0], "display" => asset[1] } ],
-          attribute_changes: audit_changes(type, i),
-          metadata: audit_metadata(type, rng),
-          justification: (i % 7).zero? ? "Requested by the asset owner." : nil,
-          occurred_at: past(rng, 730),
-          schema_version: AuditEvent::CURRENT_SCHEMA_VERSION,
-          correlation_id: SecureRandom.uuid,
-          ip_address: "10.#{rng.rand(0..255)}.#{rng.rand(0..255)}.#{rng.rand(1..254)}",
-          user_agent: "Mozilla/5.0 (demo volume data)"
-        }
-      end
-      insert_batched(AuditEvent, rows, nil)
-    end
-
-    def audit_changes(type, i)
-      case type
-      when "user.role_changed" then { "role" => [ "member", "compliance" ] }
-      when "vendor.approved"   then { "status" => [ "pending_approval", "active" ] }
-      when "vendor.updated", "system.updated" then { "description" => [ "Before #{i}", "After #{i}" ] }
-      end
-    end
-
-    # assessment.* events render their outcome from metadata, not a field diff.
-    def audit_metadata(type, rng)
-      base = { "source" => "web-ui" }
-      case type
-      when "assessment.completed"
-        residual = Assessment::RISK_LEVELS.sample(random: rng)
-        base.merge(
-          "decision" => Assessment::DECISIONS.sample(random: rng),
-          "residual_risk" => residual,
-          "previous_risk_tier" => Assessment::RISK_LEVELS.sample(random: rng),
-          "inherent_risk" => Assessment::RISK_LEVELS.sample(random: rng),
-          "next_review_on" => Assessment.suggested_next_review_on(residual).to_s
-        )
-      when "assessment.started"
-        base.merge("inherent_risk" => Assessment::RISK_LEVELS.sample(random: rng))
-      else
-        base
-      end
-    end
-
     # --- helpers -------------------------------------------------------------
 
     # Every row needs the same keys (insert_all requires it). `unique_by` turns
@@ -378,7 +312,7 @@ module Demo
     def report
       Rails.logger.info(
         "[demo] volume: vendors=#{Vendor.count} systems=#{System.count} users=#{User.count} " \
-        "assessments=#{Assessment.count} proposals=#{ChangeProposal.count} audit=#{AuditEvent.count}"
+        "assessments=#{Assessment.count} proposals=#{ChangeProposal.count}"
       )
     end
   end
