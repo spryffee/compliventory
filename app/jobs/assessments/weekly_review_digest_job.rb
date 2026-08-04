@@ -7,11 +7,10 @@ module Assessments
   # config/recurring.yml.
   class WeeklyReviewDigestJob < ApplicationJob
     def perform
-      under_assessment = Assessment.in_progress.where(asset_type: "Vendor").pluck(:asset_id)
-      reviewable = Vendor.active.where.not(id: under_assessment)
+      reviewable = Vendor.not_under_assessment
 
-      overdue = reviewable.where(next_review_on: ..Date.current).order(:next_review_on).to_a
-      never_assessed = reviewable.where(last_assessed_on: nil).order(:name).to_a
+      overdue = reviewable.review_overdue.order(:next_review_on).to_a
+      never_assessed = reviewable.never_assessed.order(:name).to_a
 
       return if overdue.empty? && never_assessed.empty?
 

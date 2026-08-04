@@ -27,6 +27,20 @@ class Vendor < ApplicationRecord
   has_many :systems, dependent: :restrict_with_error
   has_many :assessments, as: :asset, dependent: :destroy
 
+  # The review queue, defined once and shared by /compliance, the weekly digest
+  # and the vendors table's review-status filter — three surfaces that answered
+  # "needs a review?" separately, and disagreed.
+  scope :review_overdue, -> { active.where(next_review_on: ..Date.current) }
+  scope :review_due_soon, -> { active.where(next_review_on: (Date.current + 1)..(Date.current + 30)) }
+  scope :never_assessed, -> { active.where(last_assessed_on: nil) }
+  # Not scoped to active, unlike its neighbours: an archived vendor with a future
+  # date still reads as up to date in the table filter. Kept as it was.
+  scope :review_up_to_date, -> { where(next_review_on: (Date.current + 31)..) }
+  # Someone is already on it, so it belongs on no queue.
+  scope :not_under_assessment, -> {
+    where.not(id: Assessment.in_progress.where(asset_type: "Vendor").select(:asset_id))
+  }
+
   validates :category, inclusion: { in: CATEGORIES }, allow_nil: true
   validates :data_location, inclusion: { in: DATA_LOCATIONS }, allow_nil: true
   validates :risk_tier, inclusion: { in: RISK_TIERS }, allow_nil: true

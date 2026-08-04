@@ -38,10 +38,10 @@ class VendorTable < AssetTable
     return super unless key == "review_status"
 
     case value
-    when "overdue"  then scope.active.where(next_review_on: ..Date.current)
-    when "due_soon" then scope.active.where(next_review_on: (Date.current + 1)..(Date.current + 30))
-    when "never"    then scope.active.where(last_assessed_on: nil)
-    when "ok"       then scope.where(next_review_on: (Date.current + 31)..)
+    when "overdue"  then scope.review_overdue
+    when "due_soon" then scope.review_due_soon
+    when "never"    then scope.never_assessed
+    when "ok"       then scope.review_up_to_date
     else scope
     end
   end

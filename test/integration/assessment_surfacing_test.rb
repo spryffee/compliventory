@@ -64,6 +64,35 @@ class AssessmentSurfacingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Acme Cloud"    # never assessed
   end
 
+  # The common case: the review is started *because* it is overdue, so this
+  # overlap is the rule, not an edge case.
+  test "a vendor being assessed is not also listed as overdue" do
+    Current.correlation_id = SecureRandom.uuid
+    Assessments::Starter.call(vendor: @overdue, actor: users(:compliance))
+    Current.reset
+
+    sign_in_as users(:compliance)
+    get compliance_path
+
+    assert_equal 1, response.body.scan("Overdue Co").size
+    assert_includes response.body, "In progress"
+  end
+
+  # The screen and the weekly digest must answer "needs a review?" identically.
+  test "the compliance queue and the weekly digest agree on what needs a review" do
+    Current.correlation_id = SecureRandom.uuid
+    Assessments::Starter.call(vendor: @overdue, actor: users(:compliance))
+    Current.reset
+
+    sign_in_as users(:compliance)
+    get compliance_path
+
+    digest_names = Vendor.not_under_assessment.review_overdue.pluck(:name) +
+                   Vendor.not_under_assessment.never_assessed.pluck(:name)
+    assert_not_includes digest_names, "Overdue Co"
+    digest_names.each { |name| assert_includes response.body, name }
+  end
+
   test "a vendor being assessed is not also listed as never-assessed" do
     Current.correlation_id = SecureRandom.uuid
     Assessments::Starter.call(vendor: vendors(:acme), actor: users(:compliance))
