@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ApplicationHelperTest < ActionView::TestCase
+class AuditHelperTest < ActionView::TestCase
   # Audit events are never mutated, so building them unsaved is enough here.
   def event(type, metadata)
     AuditEvent.new(event_type: type, metadata: metadata)
