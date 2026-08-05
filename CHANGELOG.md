@@ -22,6 +22,11 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 - The audit log no longer queries per changed field it shows.
 - The weekly digest lists assessments left untouched for two weeks.
 - The users sync API rejects malformed or non-string email and name values.
+- An archived vendor no longer shows as up to date in the review-status filter.
+
+### Changed
+
+- Indexed the review queue and the tables' status filter.
 
 ## 0.2.2 — 2026-08-04
 

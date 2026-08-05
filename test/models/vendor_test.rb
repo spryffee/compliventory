@@ -26,6 +26,14 @@ class VendorTest < ActiveSupport::TestCase
     assert vendor.errors[:contact_email].any?
   end
 
+  # The four review scopes now agree on who is in the queue at all.
+  test "an archived vendor is on no review queue, however good its dates" do
+    archived = Vendor.create!(name: "Gone Co", owner: users(:owner), status: "archived",
+                              last_assessed_on: Date.current, next_review_on: Date.current + 1.year)
+
+    assert_not_includes Vendor.review_up_to_date, archived
+  end
+
   test "owned_or_delegated_to? covers owner and delegate, not others" do
     vendor = vendors(:acme)
     assert vendor.owned_or_delegated_to?(users(:owner))

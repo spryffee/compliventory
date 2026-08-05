@@ -33,9 +33,7 @@ class Vendor < ApplicationRecord
   scope :review_overdue, -> { active.where(next_review_on: ..Date.current) }
   scope :review_due_soon, -> { active.where(next_review_on: (Date.current + 1)..(Date.current + 30)) }
   scope :never_assessed, -> { active.where(last_assessed_on: nil) }
-  # Not scoped to active, unlike its neighbours: an archived vendor with a future
-  # date still reads as up to date in the table filter. Kept as it was.
-  scope :review_up_to_date, -> { where(next_review_on: (Date.current + 31)..) }
+  scope :review_up_to_date, -> { active.where(next_review_on: (Date.current + 31)..) }
   # Someone is already on it, so it belongs on no queue.
   scope :not_under_assessment, -> {
     where.not(id: Assessment.in_progress.where(asset_type: "Vendor").select(:asset_id))

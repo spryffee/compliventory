@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_23_100001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -111,6 +111,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_23_100001) do
     t.uuid "vendor_id"
     t.index ["name"], name: "index_systems_on_name", unique: true
     t.index ["owner_id"], name: "index_systems_on_owner_id"
+    t.index ["status", "name"], name: "index_systems_on_status_and_name"
     t.index ["technical_owner_id"], name: "index_systems_on_technical_owner_id"
     t.index ["vendor_id"], name: "index_systems_on_vendor_id"
   end
@@ -143,8 +144,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_23_100001) do
     t.string "status", default: "pending_approval", null: false
     t.datetime "updated_at", null: false
     t.string "website"
+    t.index ["last_assessed_on"], name: "index_vendors_on_last_assessed_on_active", where: "((status)::text = 'active'::text)"
     t.index ["name"], name: "index_vendors_on_name", unique: true
+    t.index ["next_review_on"], name: "index_vendors_on_next_review_on_active", where: "((status)::text = 'active'::text)"
     t.index ["owner_id"], name: "index_vendors_on_owner_id"
+    t.index ["status", "name"], name: "index_vendors_on_status_and_name"
   end
 
   add_foreign_key "assessments", "users", column: "assessor_id"
