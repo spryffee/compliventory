@@ -16,6 +16,11 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+### Fixed
+
+- Notifications no longer fail for good when their record is decided before the mail
+  goes out.
+
 ## 0.2.2 — 2026-08-04
 
 ### Fixed
