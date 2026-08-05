@@ -36,6 +36,14 @@ class AuditEventTest < ActiveSupport::TestCase
     assert_not event.valid?
   end
 
+  test "record! outside a request supplies its own correlation_id" do
+    Current.reset
+
+    event = AuditEvent.record!(event_type: "user.synced", actor: :system, targets: users(:employee))
+
+    assert_predicate event.correlation_id, :present?
+  end
+
   test "record! stamps api token attribution into metadata when present" do
     Current.api_token = api_tokens(:sync)
     event = AuditEvent.record!(event_type: "user.synced", actor: :system, targets: users(:employee))

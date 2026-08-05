@@ -41,7 +41,10 @@ class AuditEvent < ApplicationRecord
       attribute_changes: attribute_changes,
       ip_address: Current.ip_address,
       user_agent: Current.user_agent,
-      correlation_id: Current.correlation_id,
+      # Set per request by AuditContext; a job or a rake task has no controller to
+      # set it, and correlation_id is required. Own the fallback here so a write
+      # from outside a request can never be rejected.
+      correlation_id: Current.correlation_id || SecureRandom.uuid,
       metadata: metadata_with_token_attribution(metadata)
     )
   end
