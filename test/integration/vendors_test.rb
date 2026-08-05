@@ -104,6 +104,24 @@ class VendorsTest < ActionDispatch::IntegrationTest
     assert_equal "low", vendors(:pending_vendor).risk_tier
   end
 
+  test "a form opened before someone else's edit is sent back, not applied" do
+    sign_in_as users(:owner)
+    get edit_vendor_path(vendors(:acme))
+    stale_version = vendors(:acme).lock_version
+
+    Current.correlation_id = SecureRandom.uuid
+    Assets::Editor.call(asset: Vendor.find(vendors(:acme).id), actor: users(:compliance),
+                        attributes: { notes: "Theirs" })
+    Current.reset
+
+    patch vendor_path(vendors(:acme)),
+          params: { vendor: { notes: "Mine" }, lock_version: stale_version }
+
+    assert_redirected_to edit_vendor_path(vendors(:acme))
+    assert_match "changed this vendor while you had it open", flash[:alert]
+    assert_equal "Theirs", vendors(:acme).reload.notes
+  end
+
   test "detail page shows the audit trail" do
     sign_in_as users(:owner)
     patch vendor_path(vendors(:acme)), params: { vendor: { description: "traceable" } }

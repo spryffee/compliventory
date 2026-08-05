@@ -47,11 +47,15 @@ class AssetsController < ApplicationController
 
   def update
     result = Assets::Editor.call(
-      asset: @asset, actor: current_user,
-      attributes: edit_params, justification: params[:justification]
+      asset: @asset, actor: current_user, attributes: edit_params,
+      justification: params[:justification], lock_version: params[:lock_version]
     )
     if result.success
       redirect_to @asset, notice: outcome_notice(result.value)
+    elsif result.code == :stale
+      redirect_to [ :edit, @asset ],
+                  alert: "Someone else changed this #{@asset.model_name.human.downcase} while you had it open. " \
+                         "Nothing was saved — check the current values and make your change again."
     elsif result.code == :validation_failed
       @asset = result.context[:record]
       @form_fields = policy.editable_fields

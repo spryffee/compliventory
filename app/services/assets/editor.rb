@@ -15,15 +15,18 @@ module Assets
   class Editor < ApplicationService
     Outcome = Data.define(:asset, :applied_changes, :proposals)
 
-    def initialize(asset:, actor:, attributes:, justification: nil)
+    def initialize(asset:, actor:, attributes:, justification: nil, lock_version: nil)
       @asset = asset
       @actor = actor
       @attributes = attributes
       @justification = justification
+      @lock_version = lock_version
     end
 
     def call
       policy = AssetPolicy.for(@actor, @asset)
+
+      return failure(:stale) if stale?
 
       @asset.assign_attributes(@attributes)
       diff = @asset.changes.except("created_at", "updated_at")
@@ -87,9 +90,19 @@ module Assets
       success(Outcome.new(asset: @asset, applied_changes: direct, proposals: proposals))
     rescue ActiveRecord::RecordInvalid => e
       failure(:validation_failed, record: e.record)
+    rescue ActiveRecord::StaleObjectError
+      failure(:stale)
     end
 
     private
+
+    # The form carries the version it was rendered from, so an edit written on
+    # top of someone else's is refused before any work. The rescue above covers
+    # the narrower race of two saves landing together, which Rails' own locking
+    # catches on the UPDATE.
+    def stale?
+      @lock_version.present? && @lock_version.to_i != @asset.lock_version
+    end
 
     # "Nothing was entered" — nil, "" or []. NOT `blank?`: the ⚖ booleans are
     # three-state (Unknown / Yes / No) and `false.blank?` is true, which would

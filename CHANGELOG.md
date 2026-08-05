@@ -24,6 +24,8 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 - The users sync API rejects malformed or non-string email and name values.
 - An archived vendor no longer shows as up to date in the review-status filter.
 
+- An edit saved on top of someone else's is refused instead of overwriting it.
+
 ### Changed
 
 - Indexed the review queue and the tables' status filter.

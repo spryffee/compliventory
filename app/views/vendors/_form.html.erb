@@ -3,6 +3,9 @@
 <%= render "assets/lane_banner", asset: asset %>
 
 <%= form_with model: asset, class: "space-y-6" do |f| %>
+  <%# The version this form was rendered from; a mismatch on save means someone edited it meanwhile. %>
+  <%= hidden_field_tag :lock_version, asset.lock_version unless asset.new_record? %>
+
   <div class="card p-6 space-y-5">
     <%= form_field f, fields, :name do %>
       <%= f.text_field :name, class: "input", required: true %>

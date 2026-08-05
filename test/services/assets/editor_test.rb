@@ -217,6 +217,19 @@ module Assets
       end
     end
 
+    test "an edit written on top of someone else's is refused, not merged" do
+      vendor = vendors(:acme)
+      opened_at = vendor.lock_version
+      Editor.call(asset: Vendor.find(vendor.id), actor: users(:compliance), attributes: { notes: "Theirs" })
+
+      result = Editor.call(asset: Vendor.find(vendor.id), actor: users(:owner),
+                           attributes: { notes: "Mine" }, lock_version: opened_at)
+
+      assert_not result.success
+      assert_equal :stale, result.code
+      assert_equal "Theirs", vendor.reload.notes
+    end
+
     test "validation failure returns the record with errors" do
       result = Editor.call(asset: vendors(:acme), actor: users(:owner),
                            attributes: { name: "" })
