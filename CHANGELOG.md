@@ -18,9 +18,9 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ### Fixed
 
-- Notifications no longer fail for good when their record is decided before the mail
-  goes out.
-- The audit log no longer runs a pair of extra queries for every changed field it shows.
+- Notifications no longer fail when their record is decided before the mail goes out.
+- The audit log no longer queries per changed field it shows.
+- The weekly digest lists assessments left untouched for two weeks.
 
 ## 0.2.2 — 2026-08-04
 

@@ -9,13 +9,15 @@ class AssessmentMailer < ApplicationMailer
          subject: "[compliventory] Risk assessment completed for #{@vendor.name}"
   end
 
-  # Weekly compliance digest of vendors that need a risk review (overdue reviews
-  # and never-assessed active vendors). Enqueued per compliance user by
-  # Assessments::WeeklyReviewDigestJob, which skips sending when both lists empty.
+  # Weekly compliance digest of vendors that need a risk review: overdue reviews,
+  # never-assessed active vendors, and assessments left in progress. Enqueued per
+  # compliance user by Assessments::WeeklyReviewDigestJob, which skips sending
+  # when every list is empty.
   def weekly_digest
     @overdue = params[:overdue]
     @never_assessed = params[:never_assessed]
-    count = @overdue.size + @never_assessed.size
+    @stalled = params[:stalled]
+    count = @overdue.size + @never_assessed.size + @stalled.size
     mail to: params[:recipient].email,
          subject: "[compliventory] #{count} #{'vendor'.pluralize(count)} need a risk review"
   end

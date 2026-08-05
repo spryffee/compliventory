@@ -110,8 +110,9 @@ Completing an assessment stamps a **next review date**, suggested by the residua
 
 Vendors due (or overdue) for review and those never assessed surface in `/compliance` and
 in the vendors table's **review-status** filter. A weekly digest emails the compliance team
-the same two lists, minus any vendor whose assessment is already in progress. The vendor
-owner is emailed when an assessment completes.
+the same two lists, minus any vendor whose assessment is already in progress — those are
+listed separately once the assessment has gone two weeks without a change. The vendor owner
+is emailed when an assessment completes.
 
 ## Where reviews happen
 

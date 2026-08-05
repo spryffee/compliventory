@@ -61,13 +61,16 @@ class NotificationsTest < ActionMailer::TestCase
 
   test "weekly review digest" do
     overdue = Vendor.create!(name: "Late Co", owner: users(:owner), status: "active", next_review_on: 5.days.ago)
+    stalled = Assessment.create!(asset: vendors(:acme), assessor: users(:compliance),
+                                 status: "in_progress", updated_at: 30.days.ago)
     mail = AssessmentMailer.with(
-      recipient: users(:compliance), overdue: [ overdue ], never_assessed: [ vendors(:acme) ]
+      recipient: users(:compliance), overdue: [ overdue ], never_assessed: [ vendors(:acme) ], stalled: [ stalled ]
     ).weekly_digest
 
     assert_equal [ users(:compliance).email ], mail.to
-    assert_match "2 vendors need a risk review", mail.subject
+    assert_match "3 vendors need a risk review", mail.subject
     assert_match "Late Co", mail.body.encoded
     assert_match "Acme Cloud", mail.body.encoded
+    assert_match "no changes since", mail.body.encoded
   end
 end

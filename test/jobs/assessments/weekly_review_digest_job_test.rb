@@ -39,6 +39,24 @@ module Assessments
       end
     end
 
+    test "an assessment left in progress is named instead of silencing its vendor" do
+      Vendor.active.update_all(last_assessed_on: Date.current, next_review_on: Date.current + 1.year)
+      abandoned = Vendor.create!(name: "Abandoned Co", owner: users(:owner), status: "active",
+                                 last_assessed_on: Date.current - 2.years, next_review_on: Date.current - 1.month)
+      Current.correlation_id = SecureRandom.uuid
+      assessment = Starter.call(vendor: abandoned, actor: users(:compliance)).value
+      Current.reset
+
+      # Fresh: someone is on it, so nothing goes out.
+      assert_no_enqueued_emails { WeeklyReviewDigestJob.perform_now }
+
+      assessment.update_column(:updated_at, Assessment::STALLED_AFTER.ago - 1.day)
+
+      assert_enqueued_emails 1 do
+        WeeklyReviewDigestJob.perform_now
+      end
+    end
+
     test "a vendor being assessed right now is not counted as never assessed" do
       Vendor.active.update_all(last_assessed_on: Date.current, next_review_on: Date.current + 1.year)
       fresh = Vendor.create!(name: "Fresh Co", owner: users(:owner), status: "active")

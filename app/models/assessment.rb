@@ -29,7 +29,13 @@ class Assessment < ApplicationRecord
   end
   validate :completed_records_are_immutable, on: :update
 
+  # An in-progress assessment nobody has touched for this long. Its vendor sits on
+  # no review queue — someone is on it — so an abandoned one silences the reminder
+  # for good unless the digest names it. Two weeks is two missed digests.
+  STALLED_AFTER = 14.days
+
   scope :in_progress, -> { where(status: "in_progress") }
+  scope :stalled, -> { in_progress.where(updated_at: ..STALLED_AFTER.ago) }
   scope :completed, -> { where(status: "completed") }
   scope :for_asset, ->(asset) { where(asset: asset) }
   scope :newest_first, -> { order(created_at: :desc) }

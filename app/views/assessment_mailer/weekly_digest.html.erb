@@ -21,4 +21,16 @@
   </ul>
 <% end %>
 
+<% if @stalled.any? %>
+  <h3>In progress, not moving (<%= @stalled.size %>)</h3>
+  <ul>
+    <% @stalled.each do |assessment| %>
+      <li>
+        <%= link_to assessment.asset.name, vendor_assessment_url(assessment.asset, assessment) %> —
+        no changes since <%= assessment.updated_at.to_date.strftime("%b %-d, %Y") %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
 <p><%= link_to "Open the compliance inbox", compliance_url %></p>
