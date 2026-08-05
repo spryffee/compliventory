@@ -104,6 +104,35 @@ class Api::V1::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :bad_request
   end
 
+  # A non-string lands in a string column as its to_s, so a payload carrying two
+  # addresses used to create one user whose email was the literal array.
+  test "a non-string email is refused, not stored as its to_s" do
+    assert_no_difference("User.count") do
+      post "/api/v1/users", params: { email: [ "a@example.com", "b@example.com" ], name: "Two Addresses" },
+                            headers: auth_headers, as: :json
+    end
+    assert_response :unprocessable_content
+    assert_response_schema_confirm(422)
+    assert_equal "validation_failed", JSON.parse(response.body).dig("error", "code")
+  end
+
+  test "a non-string name is refused" do
+    assert_no_difference("User.count") do
+      post "/api/v1/users", params: { email: "two.names@example.com", name: { "first" => "A", "last" => "B" } },
+                            headers: auth_headers, as: :json
+    end
+    assert_response :unprocessable_content
+  end
+
+  test "a malformed email is refused" do
+    assert_no_difference("User.count") do
+      post "/api/v1/users", params: { email: "not an address", name: "Nope" },
+                            headers: auth_headers, as: :json
+    end
+    assert_response :unprocessable_content
+    assert_response_schema_confirm(422)
+  end
+
   test "role is not settable via sync" do
     post "/api/v1/users", params: { email: "sneaky@example.com", name: "Sneaky", role: "admin" },
                           headers: auth_headers, as: :json

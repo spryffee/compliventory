@@ -13,6 +13,12 @@ class UserTest < ActiveSupport::TestCase
     assert_includes dup.errors[:email], "has already been taken"
   end
 
+  test "rejects an address that is not one" do
+    user = User.new(email: "not an address", name: "X")
+    assert_not user.valid?
+    assert_includes user.errors[:email], "is invalid"
+  end
+
   test "rejects unknown roles" do
     user = User.new(email: "x@example.com", name: "X", role: "superuser")
     assert_not user.valid?

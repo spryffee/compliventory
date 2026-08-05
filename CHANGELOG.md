@@ -21,6 +21,7 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 - Notifications no longer fail when their record is decided before the mail goes out.
 - The audit log no longer queries per changed field it shows.
 - The weekly digest lists assessments left untouched for two weeks.
+- The users sync API rejects malformed or non-string email and name values.
 
 ## 0.2.2 — 2026-08-04
 

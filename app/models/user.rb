@@ -3,7 +3,10 @@ class User < ApplicationRecord
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
-  validates :email, presence: true, uniqueness: true
+  # Users arrive from an external IdP through the sync API, so the format check
+  # belongs on the model — same regexp as Vendor#contact_email.
+  validates :email, presence: true, uniqueness: true,
+                    format: { with: URI::MailTo::EMAIL_REGEXP, allow_blank: true }
   validates :name, presence: true
   validates :role, inclusion: { in: ROLES }
 
