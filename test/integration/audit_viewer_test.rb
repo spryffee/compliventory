@@ -81,4 +81,45 @@ class AuditViewerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "assessment of Acme Cloud"
     assert_includes response.body, vendor_assessment_path(vendors(:acme), assessment)
   end
+
+  # Reference columns in a diff are shown by name, which used to cost one
+  # User.find_by per value — two queries per changed field per row.
+  test "the log resolves referenced names without a query per diff" do
+    owners = 3.times.map { |i| User.create!(name: "Owner #{i}", email: "owner#{i}@example.com") }
+    10.times do |i|
+      record_owner_change(owners[i % 3], owners[(i + 1) % 3])
+    end
+
+    sign_in_as users(:compliance)
+    queries = count_queries_on("users") { get audit_events_path }
+
+    assert_response :success
+    assert_includes response.body, "Owner 0"
+    # Twenty values over three owners. The two extras are the signed-in user and
+    # the actor filter's list; before the memo this stood at 22.
+    assert_operator queries, :<=, owners.size + 2, "one lookup per distinct owner, not per value"
+  end
+
+  private
+
+  def record_owner_change(from, to)
+    AuditEvent.create!(
+      occurred_at: Time.current, schema_version: AuditEvent::CURRENT_SCHEMA_VERSION,
+      event_type: "vendor.updated", actor_type: "user", actor_id: users(:owner).id,
+      actor_display: "Oscar Owner", correlation_id: SecureRandom.uuid,
+      targets: [ AuditEvent.target_descriptor(vendors(:acme)) ],
+      attribute_changes: { "owner_id" => [ from.id, to.id ] }
+    )
+  end
+
+  def count_queries_on(table)
+    count = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |_, _, _, _, payload|
+      count += 1 if payload[:sql].include?(%("#{table}")) && !payload[:name].in?([ "SCHEMA", "TRANSACTION" ])
+    end
+    yield
+    count
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+  end
 end

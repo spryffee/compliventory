@@ -17,13 +17,20 @@ module AuditHelper
   # the record is gone (hard-deleted history), and to audit_value otherwise.
   def change_value(field, value)
     case field.to_s
-    when "owner_id", "technical_owner_id"
-      value.present? ? (User.find_by(id: value)&.name || audit_value(value)) : audit_value(value)
-    when "vendor_id"
-      value.present? ? (Vendor.find_by(id: value)&.name || audit_value(value)) : audit_value(value)
-    else
-      audit_value(value)
+    when "owner_id", "technical_owner_id" then referenced_name(User, value)
+    when "vendor_id"                      then referenced_name(Vendor, value)
+    else audit_value(value)
     end
+  end
+
+  # A page of audit rows names the same few people over and over — two values per
+  # diff, two diffs per row — so the lookup is memoized for the render. Misses are
+  # cached too: a hard-deleted record must not be re-queried per mention.
+  def referenced_name(klass, id)
+    return audit_value(id) if id.blank?
+
+    names = (@referenced_names ||= {})[klass.name] ||= {}
+    names.fetch(id) { names[id] = klass.where(id: id).pick(:name) } || audit_value(id)
   end
 
   # Events whose substance lives in metadata rather than a field diff. An
