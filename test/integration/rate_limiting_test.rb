@@ -31,6 +31,19 @@ class RateLimitingTest < ActionDispatch::IntegrationTest
     assert JSON.parse(response.body).dig("error", "details", "retry_after").positive?
   end
 
+  # Public in demo mode, and every hit writes an audit event.
+  test "trips the demo sign-in throttle" do
+    with_demo_mode do
+      10.times do
+        post "/demo/sign-in", params: { user_id: users(:employee).id }
+        assert_not_equal 429, response.status
+      end
+
+      post "/demo/sign-in", params: { user_id: users(:employee).id }
+      assert_response :too_many_requests
+    end
+  end
+
   test "lets requests under the limit through" do
     3.times do
       post "/auth/oidc"

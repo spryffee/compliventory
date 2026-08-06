@@ -43,6 +43,12 @@ class Rack::Attack
     req.ip if req.post? && req.path.start_with?("/auth/")
   end
 
+  # The demo's persona picker is public and writes an audit event per sign-in.
+  # Looser than auth/ip because switching persona is how you look around.
+  throttle("demo-sign-in/ip", limit: 10, period: 60) do |req|
+    req.ip if req.post? && req.path == "/demo/sign-in"
+  end
+
   # --- 429 responder ---------------------------------------------------------
   # Mirrors the API error envelope so consumers branch on error.code uniformly.
   self.throttled_responder = lambda do |req|

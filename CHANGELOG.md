@@ -29,13 +29,14 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 - The weekly digest lists assessments left untouched for two weeks.
 - The users sync API rejects malformed or non-string email and name values.
 - An archived vendor no longer shows as up to date in the review-status filter.
-
-- An edit saved on top of someone else's is refused instead of overwriting it.
+- An edit saved on top of someone else's is refused.
+- `/up` answers 503 when the database is unreachable.
 
 ### Changed
 
 - Indexed the review queue and the tables' status filter.
 - The app refuses to start when a required environment variable is missing or malformed.
+- The demo persona picker is rate-limited per IP.
 
 ## 0.2.2 — 2026-08-04
 
