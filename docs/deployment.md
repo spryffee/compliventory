@@ -31,12 +31,12 @@ variables.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `SECRET_KEY_BASE` | — | **Required.** Signs session cookies. Any random string; generate one with `openssl rand -hex 64` and keep it — changing it signs everyone out. |
-| `COMPLIVENTORY_HOST` | `http://localhost:3000` | Public base URL — used for the OIDC `redirect_uri` and links in emails. Set to your public URL. |
+| `COMPLIVENTORY_HOST` | — | **Required.** Public base URL — used for the OIDC `redirect_uri` and links in emails. Must be absolute, e.g. `https://compliventory.example.com`. |
 | `COMPLIVENTORY_DATABASE_HOST` | `localhost` | PostgreSQL host. |
 | `COMPLIVENTORY_DATABASE_USER` | `compliventory` | DB role the app connects as. |
 | `COMPLIVENTORY_DATABASE_PASSWORD` | — | DB password. |
-| `OIDC_ISSUER` | — | Your IdP's issuer URL (discovery-based). With it unset, the SSO button is hidden and nobody can sign in — set it. |
-| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | — | The OIDC client registered at your IdP. Redirect URI: `<COMPLIVENTORY_HOST>/auth/oidc/callback`. |
+| `OIDC_ISSUER` | — | **Required** unless `DEMO_MODE`. Your IdP's issuer URL (discovery-based). |
+| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | — | **Required** unless `DEMO_MODE`. The OIDC client registered at your IdP. Redirect URI: `<COMPLIVENTORY_HOST>/auth/oidc/callback`. |
 | `SMTP_ADDRESS` | — | SMTP host. **Unset ⇒ production mail is silently dropped** (the app works, nobody gets notified). |
 | `SMTP_PORT` | `587` | |
 | `SMTP_USER_NAME`, `SMTP_PASSWORD` | — | |
@@ -49,8 +49,9 @@ variables.
 | `RAILS_LOG_LEVEL` | `info` | |
 | `SOLID_QUEUE_IN_PUMA` | set by Kamal config | Run background jobs (email delivery) inside the web process — right for single-server installs. |
 
-OIDC configuration is read per request, so changing it needs only a restart, and an
-unconfigured instance fails cleanly at sign-in rather than at boot.
+The app refuses to start if a **Required** variable above is missing or malformed, and
+names all of them at once — a misconfigured deploy fails at rollout rather than at the
+first sign-in. OIDC values are read per request, so changing them needs only a restart.
 
 If the container dies at boot with *Missing `secret_key_base` … set this string with
 `bin/rails credentials:edit`*, `SECRET_KEY_BASE` is unset. Ignore the advice in that message:

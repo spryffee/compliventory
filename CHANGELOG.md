@@ -16,6 +16,12 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 
 ## Unreleased
 
+### Upgrade notes
+
+- Set `COMPLIVENTORY_HOST` and the three `OIDC_*` variables before deploying — the app now
+  refuses to start without them, instead of mailing links to `localhost` and failing at the
+  first sign-in. Not needed with `DEMO_MODE`.
+
 ### Fixed
 
 - Notifications no longer fail when their record is decided before the mail goes out.
@@ -29,6 +35,7 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 ### Changed
 
 - Indexed the review queue and the tables' status filter.
+- The app refuses to start when a required environment variable is missing or malformed.
 
 ## 0.2.2 — 2026-08-04
 
