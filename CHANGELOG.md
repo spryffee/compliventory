@@ -38,6 +38,10 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 - The app refuses to start when a required environment variable is missing or malformed.
 - The demo persona picker is rate-limited per IP.
 
+### Security
+
+- Every response carries a Content Security Policy.
+
 ## 0.2.2 — 2026-08-04
 
 ### Fixed

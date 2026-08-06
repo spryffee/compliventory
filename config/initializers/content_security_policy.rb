@@ -1,29 +1,29 @@
-# Be sure to restart your server when you modify this file.
+# One policy for every environment — a CSP that only holds in production is a
+# CSP nobody notices breaking.
+#
+# Nonces rather than 'unsafe-inline': importmap emits an inline <script> with the
+# importmap JSON, and Turbo builds its progress-bar <style> element at runtime,
+# reading the nonce from the csp_meta_tag in the layout. Both are nonced for us,
+# so no view has to think about it.
+Rails.application.configure do
+  config.content_security_policy do |policy|
+    policy.default_src :self
+    policy.script_src  :self
+    # Google Fonts serves the stylesheet from one host and the files from another.
+    policy.style_src   :self, "https://fonts.googleapis.com"
+    policy.font_src    :self, :data, "https://fonts.gstatic.com"
+    policy.img_src     :self, :data
+    policy.connect_src :self
+    policy.object_src  :none
+    policy.base_uri    :self
+    policy.form_action :self
+    # Nothing here is meant to be embedded; this is the header that actually
+    # stops clickjacking, X-Frame-Options being the older half-measure.
+    policy.frame_ancestors :none
+  end
 
-# Define an application-wide content security policy.
-# See the Securing Rails Applications Guide for more information:
-# https://guides.rubyonrails.org/security.html#content-security-policy-header
-
-# Rails.application.configure do
-#   config.content_security_policy do |policy|
-#     policy.default_src :self, :https
-#     policy.font_src    :self, :https, :data
-#     policy.img_src     :self, :https, :data
-#     policy.object_src  :none
-#     policy.script_src  :self, :https
-#     policy.style_src   :self, :https
-#     # Specify URI for violation reports
-#     # policy.report_uri "/csp-violation-report-endpoint"
-#   end
-#
-#   # Generate session nonces for permitted importmap, inline scripts, and inline styles.
-#   config.content_security_policy_nonce_generator = ->(request) { request.session.id.to_s }
-#   config.content_security_policy_nonce_directives = %w(script-src style-src)
-#
-#   # Automatically add `nonce` to `javascript_tag`, `javascript_include_tag`, and `stylesheet_link_tag`
-#   # if the corresponding directives are specified in `content_security_policy_nonce_directives`.
-#   # config.content_security_policy_nonce_auto = true
-#
-#   # Report violations without enforcing the policy.
-#   # config.content_security_policy_report_only = true
-# end
+  # Per request, not per session: the app keeps no server-side session (auth is a
+  # signed cookie), so a session-derived nonce would be the empty string here.
+  config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
+  config.content_security_policy_nonce_directives = %w[script-src style-src]
+end
