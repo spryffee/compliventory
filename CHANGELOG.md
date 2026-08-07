@@ -31,6 +31,7 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 - An archived vendor no longer shows as up to date in the review-status filter.
 - An edit saved on top of someone else's is refused.
 - `/up` answers 503 when the database is unreachable.
+- A vendor or system submits without touching the optional dropdowns.
 
 ### Changed
 

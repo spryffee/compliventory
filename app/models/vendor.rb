@@ -39,6 +39,11 @@ class Vendor < ApplicationRecord
     where.not(id: Assessment.in_progress.where(asset_type: "Vendor").select(:asset_id))
   }
 
+  # An untouched <select> posts "", which `allow_nil` does not cover — a
+  # submission that simply left these alone was refused. Same idea as the blank
+  # sentinel System drops out of its checkbox group: not recorded is nil.
+  normalizes :category, :data_location, :risk_tier, with: ->(value) { value.presence }
+
   validates :category, inclusion: { in: CATEGORIES }, allow_nil: true
   validates :data_location, inclusion: { in: DATA_LOCATIONS }, allow_nil: true
   validates :risk_tier, inclusion: { in: RISK_TIERS }, allow_nil: true

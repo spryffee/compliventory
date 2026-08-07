@@ -30,6 +30,24 @@ class VendorsTest < ActionDispatch::IntegrationTest
     assert_equal "pending_approval", vendor.status
   end
 
+  # What a browser actually posts for a form whose optional selects were never
+  # touched: "" for each, which is not nil and so failed the inclusion check.
+  test "a submission that leaves the optional selects alone is accepted" do
+    sign_in_as users(:employee)
+
+    assert_difference("Vendor.count", 1) do
+      post vendors_path, params: { vendor: {
+        name: "Zephyr Analytics", website: "", description: "", category: "",
+        owner_id: users(:employee).id, contact_name: "", contact_email: "",
+        notes: "", processes_personal_data: "", data_location: ""
+      } }
+    end
+
+    vendor = Vendor.find_by(name: "Zephyr Analytics")
+    assert_nil vendor.category
+    assert_nil vendor.data_location
+  end
+
   test "a member's submitted risk_tier is ignored" do
     sign_in_as users(:employee)
     post vendors_path, params: { vendor: { name: "Sneaky Inc", owner_id: users(:employee).id, risk_tier: "low" } }

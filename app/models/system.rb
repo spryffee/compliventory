@@ -22,6 +22,9 @@ class System < ApplicationRecord
   belongs_to :vendor, optional: true
   belongs_to :technical_owner, class_name: "User", optional: true
 
+  # See Vendor: an untouched <select> posts "", which `allow_nil` does not cover.
+  normalizes :authentication_method, :criticality, :data_classification, with: ->(value) { value.presence }
+
   validates :authentication_method, inclusion: { in: AUTHENTICATION_METHODS }, allow_nil: true
   validates :criticality, inclusion: { in: CRITICALITIES }, allow_nil: true
   validates :data_classification, inclusion: { in: DATA_CLASSIFICATIONS }, allow_nil: true
