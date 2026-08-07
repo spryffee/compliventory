@@ -39,6 +39,10 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 - The app refuses to start when a required environment variable is missing or malformed.
 - The demo persona picker is rate-limited per IP.
 
+### Removed
+
+- Active Storage and the unused image_processing gem, and libvips from the image.
+
 ### Security
 
 - Every response carries a Content Security Policy.
