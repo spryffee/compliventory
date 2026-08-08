@@ -14,8 +14,16 @@ class AuditEvent < ApplicationRecord
   scope :for_target, ->(record) {
     where("targets @> ?", [ { type: record.class.name, id: record.id } ].to_json)
   }
-  # Events carrying any of the given records. One containment test per record,
-  # so callers must hand in a bounded set (one user's assets, not the inventory).
+  # Events carrying any of the given records, as one containment test per record.
+  #
+  # The chain length is not the cost — measured at 200k events, 100 records make
+  # 8KB of SQL and still run in 0.1ms. What costs is the plan the ORDER BY
+  # occurred_at DESC LIMIT invites: the planner walks the date index expecting to
+  # hit matches early, and when the caller's records have no recent events it
+  # filters the whole table (683ms at 200k events, growing with the log). Every
+  # way of forcing the GIN index instead fixes that case and makes the ordinary
+  # one 8-10x slower, so it is left alone deliberately — see the retention note
+  # in docs/deployment.md, which bounds the log and with it this walk.
   scope :for_any_target, ->(records) {
     records.any? ? records.map { |record| for_target(record) }.reduce(:or) : none
   }

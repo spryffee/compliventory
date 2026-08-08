@@ -228,6 +228,35 @@ Always pass `-P --version`. This destination points at the public GHCR package, 
 The demo dataset needs no separate step: `db:prepare` runs on boot and seeds it while
 initialising the database, and the nightly job keeps it fresh from then on.
 
+## Operations
+
+### Audit log growth
+
+`audit_events` is the only table that grows without bound — every other table tracks the
+size of your inventory. Nothing prunes it: the log is append-only by design, and the app
+will not delete history it may be asked to produce.
+
+```sh
+psql -c "SELECT count(*), pg_size_pretty(pg_total_relation_size('audit_events')) FROM audit_events;"
+```
+
+Once it is large enough to matter, archive and prune in one transaction — keep whatever
+your own retention policy requires:
+
+```sh
+psql <<'SQL'
+BEGIN;
+COPY (SELECT * FROM audit_events WHERE occurred_at < now() - interval '3 years')
+  TO '/backup/audit_events_archive.csv' WITH CSV HEADER;
+DELETE FROM audit_events WHERE occurred_at < now() - interval '3 years';
+COMMIT;
+SQL
+```
+
+Pruned entries leave `/audit` and the **Activity** section of each vendor and system; the
+export is then the only copy, so treat it like a backup. Leaving the log to grow forever is
+also what eventually slows the dashboard's activity feed, which scans recent events.
+
 ## Notes
 
 - `/dev/sign-in` and the mail preview are **development-only routes** — they do not exist
