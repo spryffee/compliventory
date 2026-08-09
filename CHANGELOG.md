@@ -9,8 +9,8 @@ versions follow [Semantic Versioning](https://semver.org/), read as an *upgrade 
 | **Minor** `0.1 → 0.2` | New features; migrations apply themselves on boot. Change the tag and redeploy. |
 | **Major** `0 → 1` | **Manual steps required** — a renamed environment variable, a destructive migration, or an upgrade you must pass through in order. Always described under *Upgrade notes*. |
 
-While the version is `0.x` the project is pre-1.0: minors may still carry upgrade
-notes. Read them before deploying.
+From 1.0 on that table is a promise: a patch or minor release never asks anything of you,
+so upgrading is a tag change. Only a major carries upgrade notes.
 
 Anything a deployer must *do* goes under **Upgrade notes** in that version's section.
 
@@ -19,8 +19,11 @@ Anything a deployer must *do* goes under **Upgrade notes** in that version's sec
 ### Upgrade notes
 
 - Set `COMPLIVENTORY_HOST` and the three `OIDC_*` variables before deploying — the app now
-  refuses to start without them, instead of mailing links to `localhost` and failing at the
-  first sign-in. Not needed with `DEMO_MODE`.
+  refuses to start without them, and says which are missing. `COMPLIVENTORY_HOST` must be an
+  absolute URL. Neither applies with `DEMO_MODE`.
+- If you set `BOOTSTRAP_ADMIN_EMAIL`, check it is a valid address: email format is now
+  validated, and the seed that reads it runs on every boot.
+- From here on a patch or minor release asks nothing of you — upgrading is a tag change.
 
 ### Fixed
 

@@ -123,7 +123,7 @@ Put the secrets in `.kamal/secrets` — `SECRET_KEY_BASE` is a random string you
 (`openssl rand -hex 64`); the other two come from your IdP and your database. Then:
 
 ```sh
-kamal setup -P --version 0.2.0
+kamal setup -P --version 1.0.0
 ```
 
 `-P` (`--skip-push`) is what makes Kamal deploy the released image rather than build one
@@ -149,7 +149,7 @@ docker compose up -d
 Migrations run automatically when the container boots, so an upgrade is a tag change:
 
 ```sh
-kamal deploy -P --version 0.2.0        # Kamal
+kamal deploy -P --version 1.0.0        # Kamal
 docker compose pull && docker compose up -d   # Compose (pin the new tag first)
 ```
 
@@ -218,8 +218,8 @@ $EDITOR .env.demo      # DOMAIN, SERVER_IP, SECRET_KEY_BASE, COMPLIVENTORY_DATAB
 Then, with the registry filled in in `config/deploy.yml`:
 
 ```sh
-kamal setup  -d demo -P --version 0.2.0   # provisions the DB accessory + app
-kamal deploy -d demo -P --version 0.2.0   # from then on
+kamal setup  -d demo -P --version 1.0.0   # provisions the DB accessory + app
+kamal deploy -d demo -P --version 1.0.0   # from then on
 ```
 
 Always pass `-P --version`. This destination points at the public GHCR package, so a plain
@@ -229,6 +229,27 @@ The demo dataset needs no separate step: `db:prepare` runs on boot and seeds it 
 initialising the database, and the nightly job keeps it fresh from then on.
 
 ## Operations
+
+### Backup and restore
+
+The app runs four databases, and **only `compliventory_production` holds anything you
+cannot rebuild.** The `_cache`, `_queue` and `_cable` databases are Solid Cache, Solid Queue
+and Solid Cable working state: `db:prepare` recreates their schemas on boot, and losing them
+costs at most the jobs still queued — in practice, notification emails not yet sent.
+
+```sh
+pg_dump --format=custom compliventory_production > compliventory-$(date +%F).dump
+```
+
+Restoring goes into an empty database; the container migrates it on the next boot:
+
+```sh
+createdb compliventory_production
+pg_restore --dbname=compliventory_production compliventory-2026-08-09.dump
+```
+
+A backup nobody has restored is a hypothesis. Restore one into a scratch database and count
+a table or two before you need it for real.
 
 ### Audit log growth
 
