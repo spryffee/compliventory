@@ -50,6 +50,14 @@ It is the companion product to
 > **Early stage.** The inventory and vendor risk assessment are feature-complete; GDPR
 > RoPA (Art. 30) records are planned on top of them.
 
+## Try it
+
+[Getting started](getting-started.md) runs it locally in a few minutes — development
+sign-in and demo data, nothing to wire up.
+
+No demo is hosted permanently;
+[ask for one](https://github.com/spryffee/compliventory/issues/new?title=Demo+request).
+
 ## Start here
 
 - **[How it works](how-it-works.md)** — the objects, the review lanes, the audit log.

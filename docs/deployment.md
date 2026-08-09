@@ -68,7 +68,7 @@ an upgrade contract — what each bump obliges you to do is in
 ## Install with Kamal (recommended)
 
 [Kamal 2](https://kamal-deploy.org) gives you Let's Encrypt TLS, health-checked rollouts
-with no downtime, and one-command rollback. It is how the public demo runs.
+with no downtime, and one-command rollback.
 
 You do not need this repository — only a `config/deploy.yml` pointing at the published
 image:
