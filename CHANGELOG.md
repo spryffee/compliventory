@@ -1,18 +1,8 @@
 # Changelog
 
 Notable changes per release. Format follows [Keep a Changelog](https://keepachangelog.com/);
-versions follow [Semantic Versioning](https://semver.org/), read as an *upgrade contract*:
+versions follow [Semantic Versioning](https://semver.org/).
 
-| Bump | What it means for you |
-| --- | --- |
-| **Patch** `0.1.1 → 0.1.2` | Fixes. Change the tag and redeploy. |
-| **Minor** `0.1 → 0.2` | New features; migrations apply themselves on boot. Change the tag and redeploy. |
-| **Major** `0 → 1` | **Manual steps required** — a renamed environment variable, a destructive migration, or an upgrade you must pass through in order. Always described under *Upgrade notes*. |
-
-From 1.0 on that table is a promise: a patch or minor release never asks anything of you,
-so upgrading is a tag change. Only a major carries upgrade notes.
-
-Anything a deployer must *do* goes under **Upgrade notes** in that version's section.
 
 ## Unreleased
 
