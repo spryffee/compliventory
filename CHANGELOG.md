@@ -6,6 +6,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 1.0.0 — 2026-08-09
+
 ### Upgrade notes
 
 - Set `COMPLIVENTORY_HOST` and the three `OIDC_*` variables before deploying — the app now
